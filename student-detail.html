@@ -903,36 +903,67 @@ function setupMultilineHoverFunctionality(canvas, groupedData, container) {
                 
                 // Add toggle button and questions section if there are questions
                 if (hasQuestions) {
-                    html += `
+                    if(assessment.GameCategory == 4) {
+                        html += `
+                        <button class="toggle-questions">Show Questions <span class="question-count">${questionCount}</span></button>
+                        <div class="assessment-details">
+                            <h4>Word List:</h4>
+                            <ul>
+                        `;
+                        
+                        // Modified question display logic:
+                        // - Show question in green if correct, red if incorrect
+                        // - Only show correct answer if the question was answered incorrectly
+                        console.log(assessment.Data);
+                        assessment.Data.forEach(question => {
+                            html += `<li>
+                                <strong style="color: green;">${question.Question}</strong>`;
+                            
+                            // Only show correct answer if the question was answered incorrectly
+                            if (!question.IsCorrect) {
+                                html += ` - ${question.CorrectAnswer} Points`;
+                            }
+                            
+                            html += `</li>`;
+                        });
+                        
+                        html += `
+                                </ul>
+                            </div>
+                        `;
+                    }
+                    else {
+                        html += `
                         <button class="toggle-questions">Show Questions <span class="question-count">${questionCount}</span></button>
                         <div class="assessment-details">
                             <h4>Questions:</h4>
                             <ul>
-                    `;
-                    
-                    // Modified question display logic:
-                    // - Show question in green if correct, red if incorrect
-                    // - Only show correct answer if the question was answered incorrectly
-                    console.log(assessment.Data);
-                    assessment.Data.forEach(question => {
-                        // Determine question color based on IsCorrect status
-                        const questionColor = question.IsCorrect ? 'color: green;' : 'color: red;';
+                        `;
                         
-                        html += `<li>
-                            <strong style="${questionColor}">${question.Question}</strong>`;
+                        // Modified question display logic:
+                        // - Show question in green if correct, red if incorrect
+                        // - Only show correct answer if the question was answered incorrectly
+                        console.log(assessment.Data);
+                        assessment.Data.forEach(question => {
+                            // Determine question color based on IsCorrect status
+                            const questionColor = question.IsCorrect ? 'color: green;' : 'color: red;';
+                            
+                            html += `<li>
+                                <strong style="${questionColor}">${question.Question}</strong>`;
+                            
+                            // Only show correct answer if the question was answered incorrectly
+                            if (!question.IsCorrect) {
+                                html += ` - Correct answer: ${question.CorrectAnswer}`;
+                            }
+                            
+                            html += `</li>`;
+                        });
                         
-                        // Only show correct answer if the question was answered incorrectly
-                        if (!question.IsCorrect) {
-                            html += ` - Correct answer: ${question.CorrectAnswer}`;
-                        }
-                        
-                        html += `</li>`;
-                    });
-                    
-                    html += `
-                            </ul>
-                        </div>
-                    `;
+                        html += `
+                                </ul>
+                            </div>
+                        `;
+                    }
                 }
                 
                 html += '</div>';
@@ -967,11 +998,11 @@ function setupMultilineHoverFunctionality(canvas, groupedData, container) {
         function getGameCategoryName(categoryId) {
             const categories = {
                 0: 'None',
-                1: 'Types Of Sentences',
+                1: 'Analyzing Literature',
                 2: 'Modals',
                 3: 'Verb Forms',
                 4: 'Vocabulary',
-                5: 'Reading'
+                5: 'Making Connection'
                 // Add more categories as needed
             };
             

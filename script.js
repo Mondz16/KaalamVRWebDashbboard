@@ -44,7 +44,7 @@ function displayData() {
 
     assessmentData.DataList.forEach((item, index) => {
         const row = document.createElement("tr");
-        var categories = ["None", "Analyzing Literature", "Modals", "VerbForms", "Vocabulary", "MakingConnection"];
+        var categories = ["None", "Analyzing Literature", "Modals", "VerbForms", "Vocabulary", "Making Connection"];
         var gameType = ["None", "Grab And Place", "Paragraph Grab And Place", "Sliding Puzzle", "Slice Game", "Categorize Answers", "Grab And Throw", "Graphic Organizer"];
 
         row.innerHTML = `
@@ -81,7 +81,7 @@ function updateScore(index, newScore) {
 function showDetailsView(index) {
     const assessment = assessmentData.DataList[index];
     const detailsContainer = document.getElementById('dashboardDetails');
-    var categories = ["None", "Analyzing Literature", "Modals", "VerbForms", "Vocabulary", "MakingConnection"];
+    var categories = ["None", "Analyzing Literature", "Modals", "VerbForms", "Vocabulary", "Making Connection"];
         var gameType = ["None", "Grab And Place", "Paragraph Grab And Place", "Sliding Puzzle", "Slice Game", "Categorize Answers", "Grab And Throw", "Graphic Organizer"];
 
     var assessmentLabel = "Question";
@@ -107,14 +107,25 @@ function showDetailsView(index) {
             <div class="assessment-overview">
                 <div class="overview-grid">
                     <div class="overview-item">
-                        <label>Game Category</label>
+                        <label>Lesson</label>
                         <span>${categories[assessment.GameCategory]}</span>
                     </div>
                     <div class="overview-item">
-                        <label>Type</label>
+                        <label>Game Type</label>
                         <span>${gameType[assessment.Type]}</span>
                     </div>
                 </div>
+                
+                    <div class="overview-item">
+                        <label>Time Limit (Seconds)</label>
+                        <input 
+                            type="number" 
+                            value="${assessment.ActivitySecondsTimer || 0}" 
+                            class="editable-input timer-input" 
+                            id="activity-timer-input"
+                            min="0"
+                        >
+                    </div>
             </div>
 
             <div class="questions-section">
@@ -277,6 +288,12 @@ function saveModalChanges(assessmentIndex) {
     if (gameTypeDropdown) {
         assessmentData.DataList[index].Type = parseInt(gameTypeDropdown.value);
     }
+    
+    // Save the timer value
+    const timerInput = document.getElementById('activity-timer-input');
+    if (timerInput) {
+        assessmentData.DataList[index].ActivitySecondsTimer = parseInt(timerInput.value) || 0;
+    }
 
     const questionCards = detailsContainer.querySelectorAll('.question-card');
 
@@ -389,7 +406,7 @@ function applyFilters() {
     const searchValue = document.getElementById("search").value.toLowerCase();
 
     let filteredData = [...assessmentData.DataList];
-    var categories = ["None", "Analyzing Literature", "Modals", "VerbForms", "Vocabulary", "MakingConnection"];
+    var categories = ["None", "Analyzing Literature", "Modals", "VerbForms", "Vocabulary", "Making Connection"];
         var gameType = ["None", "Grab And Place", "Paragraph Grab And Place", "Sliding Puzzle", "Slice Game", "Categorize Answers", "Grab And Throw", "Graphic Organizer"];
 
     // Search filter

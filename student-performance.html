@@ -28,16 +28,28 @@
             box-shadow: 0 4px 8px rgba(0,0,0,0.2);
         }
         
-        .player-username {
-            font-weight: bold;
-            font-size: 1.2em;
+        .player-username-container {
+            display: flex;
+            align-items: center;
             margin-bottom: 10px;
         }
         
-        .player-id {
+        .player-username {
+            font-weight: bold;
+            font-size: 1.2em;
+            margin-right: 8px;
+        }
+        
+        .gender-icon {
+            font-size: 1.2em;
+        }
+        
+        .player-id-age {
             font-size: 0.9em;
             color: #666;
             margin-bottom: 8px;
+            display: flex;
+            gap: 15px;
         }
         
         .player-profile-icon {
@@ -298,6 +310,8 @@
         }
         
         // Function to create a player card with UserData
+        // Function to create a player card with UserData
+        // Function to create a player card with UserData
         function createPlayerCard(uniqueUserId, userData, assessmentData, playerId) {
             const playerCard = document.createElement('div');
             playerCard.className = 'player-card';
@@ -308,25 +322,58 @@
             const username = userData.Username || 'Unknown';
             const userId = userData.UserID || 'N/A';
             const profileIconId = userData.UserProfileIconID || 0;
+            const gender = userData.Gender;
+            const age = userData.Age || 'NA';
             
             // Create profile icon
             const profileIcon = document.createElement('div');
             profileIcon.className = 'player-profile-icon';
             profileIcon.innerText = username.charAt(0).toUpperCase();
             
-            // Create username and ID elements
+            // Create username and gender container
+            const usernameContainer = document.createElement('div');
+            usernameContainer.className = 'player-username-container';
+            
+            // Create username element
             const usernameElement = document.createElement('div');
             usernameElement.className = 'player-username';
             usernameElement.innerText = username;
             
-            const idElement = document.createElement('div');
-            idElement.className = 'player-id';
-            idElement.innerText = `ID: ${userId}`;
+            // Create gender icon
+            const genderIcon = document.createElement('div');
+            genderIcon.className = 'gender-icon';
+            
+            if (gender === 0) {
+                genderIcon.innerText = '♂️';
+            } else if (gender === 1) {
+                genderIcon.innerText = '♀️';
+            } else {
+                genderIcon.innerText = '⚪';
+            }
+            
+            // Add username and gender to container
+            usernameContainer.appendChild(usernameElement);
+            usernameContainer.appendChild(genderIcon);
+            
+            // Create ID and age elements in one line
+            const idAgeElement = document.createElement('div');
+            idAgeElement.className = 'player-id-age';
+            
+            const idSpan = document.createElement('span');
+            idSpan.innerText = `ID: ${userId}`;
+            
+            idAgeElement.appendChild(idSpan);
+            
+            if(age !== 'NA'){
+                const ageSpan = document.createElement('span');
+                ageSpan.innerText = `Age: ${age}`;
+                idAgeElement.appendChild(ageSpan);
+            }
             
             // Add elements to card
             playerCard.appendChild(profileIcon);
-            playerCard.appendChild(usernameElement);
-            playerCard.appendChild(idElement);
+            playerCard.appendChild(usernameContainer);
+            playerCard.appendChild(idAgeElement);
             
             // Add click event to redirect to detail page
             playerCard.addEventListener('click', () => {
@@ -336,15 +383,15 @@
             return playerCard;
         }
         
-        // Helper function to get game category name (kept for consistency)
+        // Helper function to get game category name
         function getGameCategoryName(categoryId) {
             const categories = {
                 0: 'None',
-                1: 'Types Of Sentences',
+                1: 'Analyzing Literature',
                 2: 'Modals',
                 3: 'Verb Forms',
                 4: 'Vocabulary',
-                5: 'Reading'
+                5: 'Making Connection'
                 // Add more categories as needed
             };
             
@@ -357,9 +404,11 @@
                 0: 'None',
                 1: 'Grab And Place',
                 2: 'Paragraph Grab And Place',
-                3: 'Shoot Game',
+                3: 'Sliding Puzzle',
                 4: 'Slice Game',
                 5: 'Categorize Answers',   
+                6: 'Grab and Throw',
+                7: 'Graphic Organizer',
                 // Add more types as needed
             };
             
