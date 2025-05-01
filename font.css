@@ -1,0 +1,155 @@
+/* Modern Typography System */
+
+/* Import fonts (optional - choose one approach) */
+/* Option 1: Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* Option 2: System font stack */
+:root {
+  --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  --font-heading: var(--font-primary);
+  
+  /* Font sizes using rem for accessibility */
+  --text-xs: 0.75rem;    /* 12px */
+  --text-sm: 0.875rem;   /* 14px */
+  --text-base: 1rem;     /* 16px */
+  --text-md: 1.125rem;   /* 18px */
+  --text-lg: 1.25rem;    /* 20px */
+  --text-xl: 1.5rem;     /* 24px */
+  --text-2xl: 1.875rem;  /* 30px */
+  --text-3xl: 2.25rem;   /* 36px */
+  --text-4xl: 3rem;      /* 48px */
+  
+  /* Line heights */
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.625;
+  --leading-loose: 2;
+  
+  /* Font weights */
+  --font-light: 300;
+  --font-normal: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+  
+  /* Colors */
+  --text-primary: #333333;
+  --text-secondary: #666666;
+  --text-muted: #888888;
+}
+
+/* Base styles */
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font-primary);
+  font-size: var(--text-base);
+  font-weight: var(--font-normal);
+  line-height: var(--leading-normal);
+  color: var(--text-primary);
+}
+
+/* Headings */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  font-weight: var(--font-semibold);
+  line-height: var(--leading-tight);
+}
+
+h1 {
+  font-size: var(--text-3xl);
+}
+
+h2 {
+  font-size: var(--text-2xl);
+}
+
+h3 {
+  font-size: var(--text-2xl);
+}
+
+h4 {
+  font-size: var(--text-xl);
+}
+
+h5 {
+  font-size: var(--text-lg);
+}
+
+h6 {
+  font-size: var(--text-md);
+}
+
+/* Paragraphs */
+p {
+  margin-bottom: 1.25em;
+}
+
+/* Links */
+a {
+  color: #3366cc;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+a:hover, a:focus {
+  color: #254f99;
+  text-decoration: underline;
+}
+
+/* List styles */
+ul, ol {
+  margin-bottom: 1.25em;
+  padding-left: 1.5em;
+}
+
+li {
+  margin-bottom: 0.5em;
+}
+
+/* Small text */
+small, .text-small {
+  font-size: var(--text-sm);
+}
+
+/* Block quotes */
+blockquote {
+  font-size: var(--text-md);
+  font-style: italic;
+  border-left: 4px solid #eaeaea;
+  padding-left: 1em;
+  margin-left: 0;
+  color: var(--text-secondary);
+}
+
+/* Code */
+code, pre {
+  font-family: 'Menlo', 'Monaco', 'Consolas', 'Courier New', monospace;
+  font-size: 0.9em;
+}
+
+/* Media Queries for Responsive Typography */
+@media (max-width: 768px) {
+  h1 {
+    font-size: var(--text-3xl);
+  }
+  
+  h2 {
+    font-size: var(--text-2xl);
+  }
+  
+  h3 {
+    font-size: var(--text-xl);
+  }
+}
+
+@media (max-width: 480px) {
+  html {
+    font-size: 15px;
+  }
+}

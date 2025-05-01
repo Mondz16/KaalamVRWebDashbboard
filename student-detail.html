@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Assessment Details</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="font.css">
+    <style>
+        /* Original styles remain unchanged */
+        .assessment-list {
+            margin-top: 20px;
+        }
+        
+        .assessment-item {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+        }
+        
+        .assessment-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .assessment-score {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        
+        .assessment-details {
+            margin-top: 10px;
+            display: none; /* Hidden by default */
+        }
+        
+        /* Style for collapse/expand button */
+        .toggle-questions {
+            background-color: #ddd;
+            border: none;
+            color: #333;
+            padding: 5px 10px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 12px;
+            margin: 10px 0;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        
+        .toggle-questions:hover {
+            background-color: #ccc;
+        }
+        
+        .toggle-questions.active {
+            background-color: #4CAF50;
+            color: white;
+        }
+        
+        /* Category filter styles */
+        .category-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        
+        .category-btn {
+            background-color: #f0f0f0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 8px 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+        
+        .category-btn:hover {
+            background-color: #e0e0e0;
+        }
+        
+        .category-btn.active {
+            background-color: #4CAF50;
+            color: white;
+            border-color: #4CAF50;
+        }
+        
+        .no-assessments-msg {
+            font-style: italic;
+            color: #666;
+            margin-top: 10px;
+        }
+        
+        .back-btn {
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .back-btn:hover {
+            background-color: #0b7dda;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            font-style: italic;
+            color: #666;
+        }
+        
+        .error-message {
+            color: #d9534f;
+            padding: 10px;
+            background-color: #f9e6e6;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        
+        /* Badge for question count */
+        .question-count {
+            background-color: #2196F3;
+            color: white;
+            border-radius: 12px;
+            padding: 2px 8px;
+            font-size: 12px;
+            margin-left: 5px;
+        }
+        
+        /* Transition for collapsible content */
+        .assessment-details {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        
+        .assessment-details.expanded {
+            display: contents;
+            max-height: 1000px; /* Large enough to accommodate content */
+            transition: max-height 0.5s ease-in;
+        }
+        
+        /* Styles for the graph */
+        .graph-container {
+            margin: 20px 0;
+            background: #fff;
+            padding: 15px;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            position: relative; /* Required for tooltip positioning */
+        }
+        
+        canvas {
+            width: 100%;
+            height: 700px;
+            border: 1px solid #eee;
+            margin-top: 10px;
+        }
+        
+        .graph-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 16px;
+            color: #333;
+        }
+        
+        .no-data-msg {
+            text-align: center;
+            font-style: italic;
+            color: #666;
+            padding: 20px;
+        }
+        
+        /* Tooltip styles */
+        .graph-tooltip {
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+            z-index: 100;
+            white-space: nowrap;
+        }
+        
+        .graph-tooltip.visible {
+            opacity: 1;
+        }
+        
+        /* FIX: Make the page scrollable */
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow-y: auto !important;
+        }
+        
+        .app-container {
+            display: flex;
+            min-height: 100%;
+        }
+        
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding-bottom: 40px; /* Add space at the bottom for better scrolling */
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-logo">
+                <h2>KaalamVR Web</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li class="nav-item active">
+                        <a href="index.html" class="nav-link">
+                            <span class="nav-icon">📊</span>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item active">
+                        <a href="student-performance.html" class="nav-link">
+                            <span class="nav-icon">👥</span>
+                            Student Performance
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="assessment.html" class="nav-link">
+                            <span class="nav-icon">📝</span>
+                            Assessments
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            
+            <div class="admin-info">
+                <div class="admin-profile">
+                    <span class="admin-avatar">👤</span>
+                    <span class="admin-name">Admin: <span id="currentUsername">admin</span></span>
+                </div>
+                <button id="logoutButton" class="logout-button">
+                    <span class="logout-icon">🚪</span>
+                    Log Out
+                </button>
+            </div>
+            
+            <div class="sidebar-footer">
+                <p>&copy; 2024 MindTech</p>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div class="container">
+                <button id="backBtn" class="back-btn">← Back to Student List</button>
+                
+                <h1><span id="studentName">Loading student data...</span>'s Performance Details</h1>
+                <!-- Add graph container here -->
+                <div id="graphContainer" class="graph-container">
+                    <div id="graphContent">
+                        <div class="loading">Loading graph data...</div>
+                    </div>
+                    <!-- Tooltip element for hover information -->
+                    <div id="graphTooltip" class="graph-tooltip"></div>
+                </div>
+                
+                <div id="categoryFilters" class="category-filters">
+                    <!-- Category filter buttons will be added here dynamically -->
+                </div>
+                
+                <div id="assessmentContent">
+                    <div class="loading">Loading assessment data...</div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="auth-guard.js"></script>
+    <script>
+        // Global variables
+        let assessmentData = [];
+        let currentCategoryFilter = 'all';
+        let graphPoints = []; // Store points for hover detection
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get parameters from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const playerId = urlParams.get('playerId');
+            const username = urlParams.get('username');
+            const uniqueUserId = urlParams.get('uniqueUserId');
+            
+            // Set up back button
+            document.getElementById('backBtn').addEventListener('click', function() {
+                window.location.href = 'student-performance.html';
+            });
+            
+            // If we have a playerId, fetch the data
+            if (playerId) {
+                fetchPlayerAssessments(playerId, uniqueUserId, username);
+            } else {
+                displayError('No student ID provided. Please go back and select a student.');
+            }
+            
+            // Add event delegation for toggle buttons (added later)
+            document.getElementById('assessmentContent').addEventListener('click', function(e) {
+                if (e.target && e.target.classList.contains('toggle-questions')) {
+                    const assessmentDetails = e.target.nextElementSibling;
+                    
+                    // Toggle visibility
+                    assessmentDetails.classList.toggle('expanded');
+                    
+                    // Update button text
+                    if (assessmentDetails.classList.contains('expanded')) {
+                        e.target.textContent = 'Hide Questions';
+                        e.target.classList.add('active');
+                    } else {
+                        e.target.textContent = 'Show Questions';
+                        e.target.classList.remove('active');
+                    }
+                }
+            });
+        });
+        
+        // Function to fetch player assessments
+        function fetchPlayerAssessments(playerId, uniqueUserId, username) {
+            document.getElementById('studentName').innerText = username || 'Student';
+            
+            fetch(`http://localhost:3001/api/getPlayerData/${playerId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(playerData => {
+                    processPlayerData(playerData, uniqueUserId, username);
+                })
+                .catch(error => {
+                    console.error('Error fetching player data:', error);
+                    displayError(`Failed to load student data. Please check your connection and try again. Error: ${error.message}`);
+                });
+        }
+        
+        // Function to process player data and extract assessment information
+        function processPlayerData(playerData, uniqueUserId, username) {
+            // Find the Data item with key "Data"
+            const dataItem = playerData.results ? playerData.results.find(item => item.key === "Data") : null;
+            
+            // If no data found, display error
+            if (!dataItem || !dataItem.value) {
+                displayError('No data found for this student.');
+                return;
+            }
+            
+            try {
+                // Parse the JSON data
+                const parsedData = JSON.parse(dataItem.value);
+                
+                // Check if GameDataList exists and has entries
+                if (!parsedData.GameDataList || !parsedData.GameDataList.length) {
+                    displayError('No game data found for this student.');
+                    return;
+                }
+                
+                // Find the correct user entry in GameDataList
+                // Extract unique userId from uniqueUserId (format: playerId-userId)
+                const userId = uniqueUserId.split('-')[1];
+                
+                // Find the user in GameDataList
+                let userData = null;
+                let userAssessments = [];
+                
+                for (const gameData of parsedData.GameDataList) {
+                    if (gameData.UserData && (gameData.UserData.UserID == userId || !userId)) {
+                        userData = gameData.UserData;
+                        userAssessments = gameData.AssessmentDataList || [];
+                        break;
+                    }
+                }
+                
+                // If no matching user found, display error
+                if (!userData) {
+                    displayError('User data not found.');
+                    return;
+                }
+                
+                // Save the assessment data and display it
+                assessmentData = userAssessments;
+                
+                // Create category filters
+                createCategoryFilters(userAssessments);
+                
+                // Display all assessments
+                renderAssessments(userAssessments, userData.Username || username);
+                
+                // Draw the performance graph
+                renderPerformanceGraph(userAssessments);
+                
+            } catch (e) {
+                console.error('Error parsing player data:', e);
+                displayError(`Error processing data: ${e.message}`);
+            }
+        }
+        
+        // Function to create category filter buttons
+        function createCategoryFilters(assessmentData) {
+            const filterContainer = document.getElementById('categoryFilters');
+            filterContainer.innerHTML = '';
+            
+            // Get unique categories from assessment data
+            const categories = new Set();
+            assessmentData.forEach(assessment => {
+                if (assessment.GameCategory !== undefined) {
+                    categories.add(assessment.GameCategory);
+                }
+            });
+            
+            // Create "All" button
+            const allButton = document.createElement('button');
+            allButton.className = 'category-btn active';
+            allButton.innerText = 'All Categories';
+            allButton.dataset.category = 'all';
+            allButton.addEventListener('click', function() {
+                filterByCategory('all', this);
+            });
+            filterContainer.appendChild(allButton);
+            
+            // Create button for each category
+            categories.forEach(categoryId => {
+                const button = document.createElement('button');
+                button.className = 'category-btn';
+                button.innerText = getGameCategoryName(categoryId);
+                button.dataset.category = categoryId;
+                button.addEventListener('click', function() {
+                    filterByCategory(categoryId, this);
+                });
+                filterContainer.appendChild(button);
+            });
+        }
+        
+        // Function to filter assessments by category
+        function filterByCategory(categoryId, buttonElement) {
+            // Update active button
+            const buttons = document.querySelectorAll('.category-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            buttonElement.classList.add('active');
+            
+            // Update current filter
+            currentCategoryFilter = categoryId;
+            
+            // Display filtered assessments
+            const username = document.getElementById('studentName').innerText;
+            renderAssessments(assessmentData, username);
+            
+            // Update the graph with filtered data
+            renderPerformanceGraph(assessmentData);
+        }
+        
+        // Function to render the performance graph
+function renderPerformanceGraph(assessments) {
+    const graphContent = document.getElementById('graphContent');
+    const graphContainer = document.getElementById('graphContainer');
+    
+    // Check if we have assessment data
+    if (!assessments || assessments.length === 0) {
+        graphContent.innerHTML = '<div class="no-data-msg">No assessment data available to display graph.</div>';
+        return;
+    }
+    
+    // Filter assessments by category if needed
+    let filteredAssessments = assessments;
+    if (currentCategoryFilter !== 'all') {
+        filteredAssessments = assessments.filter(assessment => 
+            assessment.GameCategory == currentCategoryFilter
+        );
+    }
+    
+    // Check if we have any assessments after filtering
+    if (filteredAssessments.length === 0) {
+        graphContent.innerHTML = `<div class="no-data-msg">No assessment data found for category: ${getGameCategoryName(currentCategoryFilter)}</div>`;
+        return;
+    }
+    
+    // Group assessments by category and title
+    const groupedAssessments = {};
+    
+    filteredAssessments.forEach(assessment => {
+        const categoryId = assessment.GameCategory;
+        const title = assessment.Title || 'Untitled Assessment';
+        const key = `${categoryId}:${title}`;
+        
+        if (!groupedAssessments[key]) {
+            groupedAssessments[key] = {
+                assessments: [],
+                categoryId: categoryId,
+                categoryName: getGameCategoryName(categoryId),
+                title: title,
+                color: getCategoryColor(categoryId)
+            };
+        }
+        
+        groupedAssessments[key].assessments.push(assessment);
+    });
+    
+    // Create canvas for the graph
+    graphContent.innerHTML = '<canvas id="scoreChart"></canvas>';
+    const canvas = document.getElementById('scoreChart');
+    const ctx = canvas.getContext('2d');
+    
+    // Set canvas dimensions (important for proper scaling)
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+    
+    // Draw graph with multiple lines
+    drawMultiLineGraph(ctx, groupedAssessments, canvas.width, canvas.height);
+    
+    // Add event listeners for hover functionality
+    setupMultilineHoverFunctionality(canvas, groupedAssessments, graphContainer);
+}
+
+// Function to get a color for each category
+function getCategoryColor(categoryId) {
+    // Predefined colors for each category
+    const categoryColors = {
+        0: '#888888', // None - Gray
+        1: '#4CAF50', // Types Of Sentences - Green
+        2: '#2196F3', // Modals - Blue
+        3: '#FF9800', // Verb Forms - Orange
+        4: '#9C27B0', // Vocabulary - Purple
+        5: '#F44336'  // Reading - Red
+        // Add more colors as needed
+    };
+    
+    // Return the color or a default if not found
+    return categoryColors[categoryId] || `hsl(${(categoryId * 60) % 360}, 70%, 50%)`;
+}
+
+// Function to draw multiple line graphs
+function drawMultiLineGraph(ctx, groupedData, width, height) {
+    // Clear canvas
+    ctx.clearRect(0, 0, width, height);
+    
+    // Reset global points array
+    graphPoints = [];
+    
+    // Set padding
+    const padding = 40;
+    const graphWidth = width - (padding * 2);
+    const graphHeight = height - (padding * 2);
+    
+    // If no data, show message
+    if (Object.keys(groupedData).length === 0) {
+        ctx.font = '14px Arial';
+        ctx.fillStyle = '#666';
+        ctx.textAlign = 'center';
+        ctx.fillText('No data available', width / 2, height / 2);
+        return;
+    }
+    
+    // Find min and max scores for y-axis scaling (always use 0 as minimum)
+    const minScore = 0;
+    let maxScore = 0;
+    
+    // Find the max number of assessments in any series (for x-axis)
+    let maxAssessmentCount = 0;
+    
+    // Process each series to find max values
+    Object.values(groupedData).forEach(group => {
+        // Sort by date (oldest first)
+        group.assessments.sort((a, b) => 
+            parseFormattedDateTime(a.DataTimeStamp) - parseFormattedDateTime(b.DataTimeStamp)
+        );
+        
+        // Update max assessment count
+        maxAssessmentCount = Math.max(maxAssessmentCount, group.assessments.length);
+        
+        // Update max score
+        group.assessments.forEach(assessment => {
+            maxScore = Math.max(maxScore, assessment.Score || 0);
+        });
+    });
+    
+    // Ensure maximum score is at least 100 for proper scaling
+    maxScore = Math.max(maxScore, 100) + 10;
+    
+    // Draw axes
+    ctx.beginPath();
+    ctx.strokeStyle = '#888';
+    ctx.lineWidth = 1;
+    
+    // Draw y-axis
+    ctx.moveTo(padding, padding);
+    ctx.lineTo(padding, height - padding);
+    
+    // Draw x-axis
+    ctx.moveTo(padding, height - padding);
+    ctx.lineTo(width - padding, height - padding);
+    ctx.stroke();
+    
+    // Draw y-axis labels and grid lines
+    ctx.font = '10px Arial';
+    ctx.fillStyle = '#666';
+    ctx.textAlign = 'right';
+    
+    const yStep = maxScore > 100 ? 20 : 10; // Adjust step size based on max score
+    for (let score = 0; score <= maxScore; score += yStep) {
+        const y = height - padding - (score / maxScore * graphHeight);
+        
+        // Draw grid line
+        ctx.beginPath();
+        ctx.strokeStyle = '#eee';
+        ctx.moveTo(padding, y);
+        ctx.lineTo(width - padding, y);
+        ctx.stroke();
+        
+        // Draw label
+        ctx.fillText(score, padding - 5, y + 3);
+    }
+    
+    // Draw x-axis labels (assessment numbers)
+    ctx.textAlign = 'center';
+    
+    // Determine step size for x labels (avoid overcrowding)
+    const maxLabels = Math.min(10, maxAssessmentCount);
+    const xLabelStep = Math.ceil(maxAssessmentCount / maxLabels);
+    
+    for (let i = 1; i <= maxAssessmentCount; i++) {
+        if (i % xLabelStep === 0 || i === 1 || i === maxAssessmentCount) {
+            const x = padding + ((i - 1) / (maxAssessmentCount - 1 || 1) * graphWidth);
+            
+            // Draw grid line
+            ctx.beginPath();
+            ctx.strokeStyle = '#eee';
+            ctx.moveTo(x, padding);
+            ctx.lineTo(x, height - padding);
+            ctx.stroke();
+            
+            // Draw assessment number
+            ctx.fillText(`#${i}`, x, height - padding + 15);
+        }
+    }
+    
+    // Draw legend
+    drawLegend(ctx, groupedData, width, padding);
+    
+    // Draw data lines for each group
+    Object.values(groupedData).forEach(group => {
+        // Skip if no assessments
+        if (group.assessments.length === 0) return;
+        
+        // Draw lines connecting points
+        ctx.beginPath();
+        ctx.strokeStyle = group.color;
+        ctx.lineWidth = 2;
+        
+        group.assessments.forEach((assessment, i) => {
+            const assessmentNumber = i + 1; // 1-based index within this group
+            const x = padding + ((assessmentNumber - 1) / (maxAssessmentCount - 1 || 1) * graphWidth);
+            const y = height - padding - ((assessment.Score || 0) / maxScore * graphHeight);
+            
+            if (i === 0) {
+                ctx.moveTo(x, y);
+            } else {
+                ctx.lineTo(x, y);
+            }
+            
+            // Store point data for hover functionality
+            graphPoints.push({
+                x: x,
+                y: y,
+                score: assessment.Score || 0,
+                date: parseFormattedDateTime(assessment.DataTimeStamp),
+                title: assessment.Title || 'Untitled Assessment',
+                categoryName: group.categoryName,
+                color: group.color,
+                assessmentNumber: assessmentNumber,
+                seriesKey: `${group.categoryId}:${group.title}`
+            });
+        });
+        
+        ctx.stroke();
+        
+        // Draw data points
+        group.assessments.forEach((assessment, i) => {
+            const assessmentNumber = i + 1;
+            const x = padding + ((assessmentNumber - 1) / (maxAssessmentCount - 1 || 1) * graphWidth);
+            const y = height - padding - ((assessment.Score || 0) / maxScore * graphHeight);
+            
+            // Draw point
+            ctx.beginPath();
+            ctx.fillStyle = group.color;
+            ctx.arc(x, y, 4, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+        });
+    });
+    
+    // Draw graph title
+    ctx.font = '14px Arial';
+    ctx.fillStyle = '#333';
+    ctx.textAlign = 'center';
+    ctx.fillText('Student Assessment Performance by Category', width / 2, padding - 15);
+}
+
+// Function to draw the legend
+function drawLegend(ctx, groupedData, width, topPadding) {
+    const groups = Object.values(groupedData);
+    if (groups.length === 0) return;
+    
+    const legendX = width - 250; // Position on right side
+    let legendY = topPadding + 20;
+    
+    // Draw legend background
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+    ctx.fillRect(legendX - 10, legendY - 15, 210, 20 + (groups.length * 20));
+    ctx.strokeStyle = '#ddd';
+    ctx.strokeRect(legendX - 10, legendY - 15, 210, 20 + (groups.length * 20));
+    
+    // Draw legend title
+    ctx.fillStyle = '#333';
+    ctx.font = '12px Arial';
+    ctx.textAlign = 'left';
+    ctx.fillText('Legend', legendX, legendY);
+    legendY += 5;
+    
+    // Draw legend items
+    groups.forEach(group => {
+        legendY += 15;
+        
+        // Draw color indicator
+        ctx.beginPath();
+        ctx.fillStyle = group.color;
+        ctx.arc(legendX + 5, legendY - 5, 5, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Draw label
+        ctx.fillStyle = '#333';
+        ctx.font = '11px Arial';
+        ctx.fillText(`${group.categoryName}: ${group.title}`, legendX + 15, legendY);
+    });
+}
+
+// Function to set up hover functionality for multiple lines
+function setupMultilineHoverFunctionality(canvas, groupedData, container) {
+            const tooltip = document.getElementById('graphTooltip');
+            
+            // Add mouse move event listener
+            canvas.addEventListener('mousemove', function(e) {
+                const rect = canvas.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+                
+                // Check if mouse is over any point
+                let hoverPoint = null;
+                let closestDistance = Infinity;
+                
+                for (let point of graphPoints) {
+                    const distance = Math.sqrt(Math.pow(mouseX - point.x, 2) + Math.pow(mouseY - point.y, 2));
+                    if (distance <= 10 && distance < closestDistance) { // Find closest point within range
+                        hoverPoint = point;
+                        closestDistance = distance;
+                    }
+                }
+                
+                // Update tooltip
+                if (hoverPoint) {
+                    const formattedDate = formatDateTimeForTooltip(hoverPoint.date);
+                    tooltip.innerHTML = `
+                        <div style="border-left: 4px solid ${hoverPoint.color}; padding-left: 5px;">
+                            <strong>${hoverPoint.title}</strong><br>
+                            Category: ${hoverPoint.categoryName}<br>
+                            Assessment Take #${hoverPoint.assessmentNumber}<br>
+                            ${formattedDate}<br>
+                            Score: ${hoverPoint.score}
+                        </div>`;
+                    
+                    // Update tooltip style for better visibility
+                    tooltip.style.backgroundColor = 'rgba(255, 255, 255, 0.95)';
+                    tooltip.style.border = '1px solid #ccc';
+                    tooltip.style.boxShadow = '0 2px 5px rgba(0,0,0,0.2)';
+                    tooltip.style.padding = '8px';
+                    tooltip.style.borderRadius = '4px';
+                    tooltip.style.fontSize = '12px';
+                    tooltip.style.color = '#333';
+                    
+                    // Position tooltip near the point, but ensure it stays within viewport
+                    const tooltipWidth = 200; // Approximate width
+                    const tooltipHeight = 100; // Approximate height
+                    
+                    let leftPos = hoverPoint.x + 10;
+                    if (leftPos + tooltipWidth > canvas.width) {
+                        leftPos = hoverPoint.x - tooltipWidth - 10;
+                    }
+                    
+                    let topPos = hoverPoint.y - 70;
+                    if (topPos < 0) {
+                        topPos = hoverPoint.y + 10;
+                    }
+                    
+                    tooltip.style.left = leftPos + 'px';
+                    tooltip.style.top = topPos + 'px';
+                    tooltip.classList.add('visible');
+                } else {
+                    tooltip.classList.remove('visible');
+                }
+            });
+            
+            // Hide tooltip when mouse leaves canvas
+            canvas.addEventListener('mouseleave', function() {
+                tooltip.classList.remove('visible');
+            });
+        }
+        
+        // Helper function to format date for tooltip display
+        function formatDateTimeForTooltip(date) {
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const month = months[date.getMonth()];
+            const day = date.getDate();
+            const year = date.getFullYear();
+            
+            // Format time with AM/PM
+            let hours = date.getHours();
+            const minutes = date.getMinutes().toString().padStart(2, '0');
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12;
+            hours = hours ? hours : 12; // Convert hour 0 to 12
+            
+            return `${month} ${day} ${year} ${hours}:${minutes} ${ampm}`;
+        }
+        
+        // Helper function to format date in text form for x-axis
+        function formatDateText(date) {
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const month = months[date.getMonth()];
+            const day = date.getDate();
+            
+            return `${month} ${day}`;
+        }
+        
+        function renderAssessments(assessmentData, username) {
+            const assessmentContent = document.getElementById('assessmentContent');
+            
+            // Check if we have assessment data
+            if (!assessmentData || assessmentData.length === 0) {
+                assessmentContent.innerHTML = '<p>No assessment data available for this student.</p>';
+                return;
+            }
+            
+            // Filter assessments by category if needed
+            let filteredAssessments = assessmentData;
+            if (currentCategoryFilter !== 'all') {
+                filteredAssessments = assessmentData.filter(assessment => 
+                    assessment.GameCategory == currentCategoryFilter
+                );
+            }
+            
+            // Check if we have any assessments after filtering
+            if (filteredAssessments.length === 0) {
+                assessmentContent.innerHTML = `<p class="no-assessments-msg">No assessments found for category: ${getGameCategoryName(currentCategoryFilter)}</p>`;
+                return;
+            }
+            
+            // Sort assessments by date (newest first for display)
+            filteredAssessments = [...filteredAssessments].sort((a, b) => 
+                parseFormattedDateTime(b.DataTimeStamp) - parseFormattedDateTime(a.DataTimeStamp)
+            );
+            
+            // Create assessment list
+            let html = '<div class="assessment-list">';
+            
+            filteredAssessments.forEach((assessment, index) => {
+                const title = assessment.Title || 'Untitled Assessment';
+                const score = assessment.Score;
+                const gameCategory = getGameCategoryName(assessment.GameCategory);
+                const type = getAssessmentTypeName(assessment.Type);
+                const dataTimeStamp = parseFormattedDateTime(assessment.DataTimeStamp);
+                
+                // Check if assessment has questions
+                const hasQuestions = assessment.Data && assessment.Data.length > 0;
+                const questionCount = hasQuestions ? assessment.Data.length : 0;
+                const assessmentNumber = index + 1;
+                
+                html += `
+                    <div class="assessment-item" id="assessment-${index}">
+                        <div class="assessment-title">${title} (${formatDateTimeForTooltip(dataTimeStamp)})</div>
+                        <div>Category: ${gameCategory}</div>
+                        <div>Type: ${type}</div>
+                        <div>Score: <span class="assessment-score">${score}</span></div>
+                `;
+                
+                // Add toggle button and questions section if there are questions
+                if (hasQuestions) {
+                    html += `
+                        <button class="toggle-questions">Show Questions <span class="question-count">${questionCount}</span></button>
+                        <div class="assessment-details">
+                            <h4>Questions:</h4>
+                            <ul>
+                    `;
+                    
+                    // Modified question display logic:
+                    // - Show question in green if correct, red if incorrect
+                    // - Only show correct answer if the question was answered incorrectly
+                    console.log(assessment.Data);
+                    assessment.Data.forEach(question => {
+                        // Determine question color based on IsCorrect status
+                        const questionColor = question.IsCorrect ? 'color: green;' : 'color: red;';
+                        
+                        html += `<li>
+                            <strong style="${questionColor}">${question.Question}</strong>`;
+                        
+                        // Only show correct answer if the question was answered incorrectly
+                        if (!question.IsCorrect) {
+                            html += ` - Correct answer: ${question.CorrectAnswer}`;
+                        }
+                        
+                        html += `</li>`;
+                    });
+                    
+                    html += `
+                            </ul>
+                        </div>
+                    `;
+                }
+                
+                html += '</div>';
+            });
+            
+            html += '</div>';
+            
+            assessmentContent.innerHTML = html;
+        }
+
+        function parseFormattedDateTime(dateTimeStr) {
+            // Expected format: "yyyy-MM-dd_HH-mm-ss"
+            const [datePart, timePart] = dateTimeStr.split('_');
+            const [year, month, day] = datePart.split('-').map(Number);
+            const [hours, minutes, seconds] = timePart.split('-').map(Number);
+
+            // Month is 0-based in JavaScript Date (0 = Jan, 11 = Dec)
+            return new Date(year, month - 1, day, hours, minutes, seconds);
+        }
+        
+        // Function to display error message
+        function displayError(message) {
+            const assessmentContent = document.getElementById('assessmentContent');
+            assessmentContent.innerHTML = `<div class="error-message">${message}</div>`;
+            
+            // Also update graph area
+            const graphContent = document.getElementById('graphContent');
+            graphContent.innerHTML = `<div class="error-message">${message}</div>`;
+        }
+        
+        // Helper function to get game category name
+        function getGameCategoryName(categoryId) {
+            const categories = {
+                0: 'None',
+                1: 'Types Of Sentences',
+                2: 'Modals',
+                3: 'Verb Forms',
+                4: 'Vocabulary',
+                5: 'Reading'
+                // Add more categories as needed
+            };
+            
+            return categories[categoryId] || `Category ${categoryId}`;
+        }
+        
+        // Helper function to get assessment type name
+        function getAssessmentTypeName(typeId) {
+            const types = {
+                0: 'None',
+                1: 'Grab And Place',
+                2: 'Paragraph Grab And Place',
+                3: 'Sliding Puzzle',
+                4: 'Slice Game',
+                5: 'Categorize Answers',   
+                6: 'Grab and Throw',
+                7: 'Graphic Organizer',
+                // Add more types as needed
+            };
+            
+            return types[typeId] || `Type ${typeId}`;
+        }
+    </script>
+</body>
+</html>

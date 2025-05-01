@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assessment Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="font.css">
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-logo">
+                <h2>KaalamVR Web</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li class="nav-item">
+                        <a href="index.html" class="nav-link">
+                            <span class="nav-icon">📊</span>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="student-performance.html" class="nav-link">
+                            <span class="nav-icon">👥</span>
+                            Student Performance
+                        </a>
+                    </li>
+                    <li class="nav-item active">
+                        <a href="assessment.html" class="nav-link">
+                            <span class="nav-icon">📝</span>
+                            Assessments
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            
+            <div class="admin-info">
+                <div class="admin-profile">
+                    <span class="admin-avatar">👤</span>
+                    <span class="admin-name">Admin: <span id="currentUsername">admin</span></span>
+                </div>
+                <button id="logoutButton" class="logout-button">
+                    <span class="logout-icon">🚪</span>
+                    Log Out
+                </button>
+            </div>
+            
+            <div class="sidebar-footer">
+                <p>&copy; 2024 MindTech</p>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div class="dashboard-layout">
+                <div class="dashboard-list">
+                    <div class="container">
+                        <h1>Assessments</h1>
+
+                        <div class="controls">
+                            <input type="text" id="search" placeholder="Search by title..." onkeyup="applyFilters()">
+                        </div>
+
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Lesson</th>
+                                    <th>Game Type</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="assessmentList">
+                                <!-- Data will be inserted here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="dashboard-details" id="dashboardDetails">
+                    <div class="details-placeholder">
+                        <h2>Select an Assessment</h2>
+                        <p>Click 'View Details' to see assessment information</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="auth-guard.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
