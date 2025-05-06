@@ -236,10 +236,22 @@
                             Student Performance
                         </a>
                     </li>
-                    <li class="nav-item">
+                    <li class="nav-item admin-only">
                         <a href="assessment.html" class="nav-link">
                             <span class="nav-icon">📝</span>
                             Assessments
+                        </a>
+                    </li>
+                    <li class="nav-item admin-only">
+                        <a href="admin-approvals.html" class="nav-link">
+                            <span class="nav-icon">✅</span>
+                            User Approvals
+                        </a>
+                    </li>
+                    <li class="nav-item admin-only">
+                        <a href="admin-users.html" class="nav-link">
+                            <span class="nav-icon">👤</span>
+                            Manage Users
                         </a>
                     </li>
                 </ul>
@@ -1024,6 +1036,45 @@ function setupMultilineHoverFunctionality(canvas, groupedData, container) {
             };
             
             return types[typeId] || `Type ${typeId}`;
+        }
+    </script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check authentication type and show/hide admin elements
+            checkUserRole();
+        });
+        // Function to check user role and show/hide admin elements
+        function checkUserRole() {
+            const adminAuth = JSON.parse(localStorage.getItem('adminAuth'));
+            const userAuth = JSON.parse(localStorage.getItem('userAuth'));
+            
+            // If admin is logged in, show admin-only elements
+            if (adminAuth) {
+                document.querySelectorAll('.admin-only').forEach(element => {
+                    element.style.display = 'block';
+                });
+                
+                // Update admin name display
+                const usernameElement = document.getElementById('currentUsername');
+                if (usernameElement && adminAuth.username) {
+                    usernameElement.textContent = adminAuth.username;
+                }
+            } 
+            // If regular user is logged in, keep admin elements hidden
+            else if (userAuth) {
+                // Update user name display
+                const usernameElement = document.getElementById('currentUsername');
+                if (usernameElement && userAuth.username) {
+                    usernameElement.textContent = userAuth.username;
+                }
+                
+                // Change "Admin:" text to "User:"
+                const adminNameElement = document.querySelector('.admin-name');
+                if (adminNameElement) {
+                    adminNameElement.innerHTML = 'User: <span id="currentUsername">' + (userAuth.username || 'user') + '</span>';
+                }
+            }
         }
     </script>
 </body>

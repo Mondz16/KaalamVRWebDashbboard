@@ -978,3 +978,8 @@ table input:focus {
 .sidebar-nav {
     flex-grow: 1;
 }
+
+        /* Hide admin-only elements by default */
+        .admin-only {
+            display: none;
+        }

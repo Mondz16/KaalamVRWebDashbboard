@@ -1,46 +1,72 @@
 // Auth Guard - Protect admin pages
-
 document.addEventListener('DOMContentLoaded', function() {
-    // Check if the current page is the login page
-    const isLoginPage = window.location.pathname.includes('login.html');
     
-    // If not on login page, verify authentication
-    if (!isLoginPage) {
-        checkAuth();
+    // If on an admin page, verify admin authentication
+    checkAuth();
+    
+    // Add logout functionality if buttons exist
+    const adminLogoutButton = document.getElementById('logoutButton');
+    if (adminLogoutButton) {
+        adminLogoutButton.addEventListener('click', logoutAdmin);
     }
     
-    // Add logout functionality if logout button exists
-    const logoutButton = document.getElementById('logoutButton');
-    if (logoutButton) {
-        logoutButton.addEventListener('click', logout);
+    const userLogoutButton = document.getElementById('logoutButton');
+    if (userLogoutButton) {
+        userLogoutButton.addEventListener('click', logoutUser);
     }
     
-    // Function to check authentication
+    // Function to check admin authentication
     function checkAuth() {
         const auth = JSON.parse(localStorage.getItem('adminAuth'));
+        const userAuth = JSON.parse(localStorage.getItem('userAuth'));
         
+        if(auth){
+            // Optional: Update admin info in the UI
+            const usernameElement = document.getElementById('currentUsername');
+            if (usernameElement && auth.username) {
+                usernameElement.textContent = auth.username;
+            }
+            return;
+        }
+        else if(userAuth){
+            // Optional: Update user info in the UI
+            const usernameElement = document.getElementById('currentUsername');
+            const fullNameElement = document.getElementById('currentFullName');
+            
+            if (usernameElement && userAuth.username) {
+                usernameElement.textContent = userAuth.username;
+            }
+            
+            if (fullNameElement && userAuth.fullName) {
+                fullNameElement.textContent = userAuth.fullName;
+            }
+            return;
+        }
+
         // If no auth token or token is expired, redirect to login
         if (!auth || auth.expires <= Date.now()) {
             localStorage.removeItem('adminAuth'); // Clear expired token
             window.location.href = 'login.html';
             return;
         }
-        
-        // Optional: Update user info in the UI
-        const usernameElement = document.getElementById('currentUsername');
-        if (usernameElement && auth.username) {
-            usernameElement.textContent = auth.username;
+        else if (!userAuth || userAuth.expires <= Date.now()) {
+            localStorage.removeItem('userAuth'); // Clear expired token
+            window.location.href = 'login.html';
+            return;
         }
     }
     
-    // Function to handle logout
-    function logout(e) {
+    // Function to handle admin logout
+    function logoutAdmin(e) {
         e.preventDefault();
-        
-        // Clear auth data
         localStorage.removeItem('adminAuth');
-        
-        // Redirect to login page
+        window.location.href = 'login.html';
+    }
+    
+    // Function to handle user logout
+    function logoutUser(e) {
+        e.preventDefault();
+        localStorage.removeItem('userAuth');
         window.location.href = 'login.html';
     }
 });
