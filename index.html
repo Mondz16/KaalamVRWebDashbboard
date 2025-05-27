@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assessment Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="font.css">
+    <style>
+        /* Dashboard specific styles */
+        .stats-cards {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .stats-card {
+            flex: 1;
+            min-width: 200px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .stats-card-number {
+            font-size: 32px;
+            font-weight: bold;
+            color: #2196F3;
+            margin: 10px 0;
+        }
+        
+        .stats-card-title {
+            font-size: 14px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .dashboard-charts {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .chart-container {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+        
+        .chart-left {
+            flex: 6;
+            min-width: 300px;
+        }
+
+        .chart-left canvas {
+            max-height: 2000px !important;
+        }
+        
+        .chart-right {
+            flex: 4;
+            min-width: 300px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .chart-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        canvas {
+            width: 100%;
+            max-height: 300px;
+        }
+        
+        /* Table styles */
+        .recent-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .recent-table th {
+            background-color: #f5f5f5;
+            padding: 10px;
+            text-align: left;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .recent-table td {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .recent-table tr:hover {
+            background-color: #f9f9f9;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            font-style: italic;
+            color: #666;
+        }
+        
+        .error-message {
+            color: #d9534f;
+            padding: 10px;
+            background-color: #f9e6e6;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        
+        /* Make sure charts are responsive */
+        @media (max-width: 768px) {
+            .dashboard-charts {
+                flex-direction: column;
+            }
+            
+            .chart-left, .chart-right {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-logo">
+                <img src="assets/images/logo.png" alt="KaalamVR Logo" class="logo-image">
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li class="nav-item active">
+                        <a href="index.html" class="nav-link">
+                            <span class="nav-icon">📊</span>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="student-performance.html" class="nav-link">
+                            <span class="nav-icon">👥</span>
+                            Student Performance
+                        </a>
+                    </li>
+                    <li class="nav-item admin-only">
+                        <a href="assessment.html" class="nav-link">
+                            <span class="nav-icon">📝</span>
+                            Assessments
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            
+            <!-- Admin Info and Logout -->
+            <div class="admin-info">
+                <div class="admin-profile">
+                    <span class="admin-avatar">👤</span>
+                    <span class="admin-name">Admin: <span id="currentUsername">admin</span></span>
+                </div>
+                <button id="logoutButton" class="logout-button">
+                    <span class="logout-icon">🚪</span>
+                    Log Out
+                </button>
+            </div>
+            
+            <div class="sidebar-footer">
+                <p>&copy; 2025 MindTech</p>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div class="container">
+                <!-- Stats Cards -->
+                <div class="stats-cards">
+                    <div class="stats-card">
+                        <div class="stats-card-title">Total Users</div>
+                        <div id="userCount" class="stats-card-number">0</div>
+                    </div>
+                    <div class="stats-card">
+                        <div class="stats-card-title">Total Lessons</div>
+                        <div id="lessonCount" class="stats-card-number">0</div>
+                    </div>
+                    <div class="stats-card">
+                        <div class="stats-card-title">Total Student's Assessments</div>
+                        <div id="assessmentCount" class="stats-card-number">0</div>
+                    </div>
+                </div>
+                
+                <!-- Dashboard Charts -->
+                <div class="dashboard-charts">
+                    <!-- Left Chart - Horizontal Bar -->
+                    <div class="chart-container chart-left">
+                        <h3 class="chart-title">Assessment Distribution by User</h3>
+                        <div id="barChartContainer">
+                            <canvas id="barChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Right Charts and Table -->
+                    <div class="chart-right">
+                        <!-- Pie Chart -->
+                        <div class="chart-container">
+                            <h3 class="chart-title">Assessment Distribution by Category</h3>
+                            <div id="pieChartContainer">
+                                <canvas id="pieChart"></canvas>
+                            </div>
+                        </div>
+                        
+                        <!-- Recent Assessments Table -->
+                        <div class="chart-container">
+                            <h3 class="chart-title">Recent Assessments</h3>
+                            <div id="recentAssessments">
+                                <table class="recent-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Username</th>
+                                            <th>Lesson</th>
+                                            <th>Assessment Title</th>
+                                            <th>Date/Time</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="recentAssessmentsBody">
+                                        <tr>
+                                            <td colspan="3" class="loading">Loading recent assessments...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="auth-guard.js"></script>
+    <script>
+        // Global variables
+        let dashboardData = {
+            users: [],
+            assessments: [],
+            lessonCategories: ["Analyzing Literature", "Modals","Vocabulary", "Making Connection"]
+        };
+
+        
+        
+        // New Category Colors (Modern, Accessible Color Palette)
+const categoryColors = {
+    0: '#8d99ae', // None - Steel Blue Gray
+    1: '#38b000', // Types Of Sentences - Green
+    2: '#3a86ff', // Modals - Blue
+    3: '#f48c06', // Verb Forms - Orange
+    4: '#7209b7', // Vocabulary - Purple
+    5: '#e63946'  // Reading - Red
+};
+        
+        // Map GameCategory IDs to names
+        const gameCategoryNames = {
+            0: 'None',
+            1: 'Analyzing Literature',
+            2: 'Modals',
+            3: 'Verb Forms',
+            4: 'Vocabulary',
+            5: 'Making Connection'
+        };
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Fetch dashboard data
+            fetchDashboardData();
+        });
+        
+        // Function to fetch dashboard data
+        function fetchDashboardData() {
+            fetch('http://localhost:3001/api/getPlayers')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(playerData => {
+                    processDashboardData(playerData);
+                })
+                .catch(error => {
+                    console.error('Error fetching dashboard data:', error);
+                    displayError(`Failed to load dashboard data. Please check your connection and try again. Error: ${error.message}`);
+                });
+        }
+        
+        // Function to process dashboard data
+        function processDashboardData(playerData) {
+            // Reset dashboard data
+            dashboardData.users = [];
+            dashboardData.assessments = [];
+            
+            // Process each player's data
+            processPlayerDataPromises = playerData.results.map(player => {
+                return fetch(`http://localhost:3001/api/getPlayerData/${player.id}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`Failed to fetch player data for ${player.id}`);
+                        }
+                        return response.json();
+                    })
+                    .then(playerDetail => {
+                        // Find the Data item with key "Data"
+                        const dataItem = playerDetail.results ? playerDetail.results.find(item => item.key === "Data") : null;
+                        
+                        if (dataItem && dataItem.value) {
+                            try {
+                                // Parse the JSON data
+                                const parsedData = JSON.parse(dataItem.value);
+                                
+                                // Check if GameDataList exists and has entries
+                                if (parsedData.GameDataList && parsedData.GameDataList.length) {
+                                    // Extract users and assessments
+                                    parsedData.GameDataList.forEach(gameData => {
+                                        if (gameData.UserData) {
+                                            dashboardData.users.push(gameData.UserData);
+                                        }
+                                        
+                                        if (gameData.AssessmentDataList && gameData.AssessmentDataList.length) {
+                                            // Add username to each assessment for reference
+                                            const assessments = gameData.AssessmentDataList.map(assessment => ({
+                                                ...assessment,
+                                                Username: gameData.UserData?.Username || 'Unknown'
+                                            }));
+                                            
+                                            dashboardData.assessments = [...dashboardData.assessments, ...assessments];
+                                        }
+                                    });
+                                }
+                            } catch (e) {
+                                console.error('Error parsing player data:', e);
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching player detail:', error);
+                    });
+            });
+            
+            // When all player data is processed, update the dashboard
+            Promise.all(processPlayerDataPromises)
+                .then(() => {
+                    updateDashboard();
+                })
+                .catch(error => {
+                    console.error('Error processing player data:', error);
+                    displayError(`Failed to process dashboard data. Error: ${error.message}`);
+                });
+        }
+        
+        // Function to update the dashboard UI
+        function updateDashboard() {
+            // Update stats cards
+            document.getElementById('userCount').textContent = dashboardData.users.length;
+            document.getElementById('lessonCount').textContent = dashboardData.lessonCategories.length;
+            document.getElementById('assessmentCount').textContent = dashboardData.assessments.length;
+            
+            // Update bar chart
+            updateBarChart();
+            
+            // Update pie chart
+            updatePieChart();
+            
+            // Update recent assessments table
+            updateRecentAssessmentsTable();
+        }
+
+// Update the horizontal bar chart with improved colors
+function updateBarChart() {
+    const ctx = document.getElementById('barChart').getContext('2d');
+    
+    // Group assessments by username and count them
+    const userAssessmentCounts = {};
+    
+    dashboardData.assessments.forEach(assessment => {
+        const username = assessment.Username || 'Unknown';
+        
+        if (!userAssessmentCounts[username]) {
+            userAssessmentCounts[username] = 0;
+        }
+        
+        userAssessmentCounts[username]++;
+    });
+    
+    // Sort users by assessment count (descending)
+    const sortedUsers = Object.keys(userAssessmentCounts).sort((a, b) => 
+        userAssessmentCounts[b] - userAssessmentCounts[a]
+    );
+    
+    // Take only top 10 users for readability
+    const topUsers = sortedUsers.slice(0, 10);
+    const userData = topUsers.map(user => userAssessmentCounts[user]);
+    
+    // Generate gradient for bars
+    const gradient = ctx.createLinearGradient(0, 0, 300, 0);
+    gradient.addColorStop(0, '#3a86ff');
+    gradient.addColorStop(1, '#4361ee');
+    
+    // Create horizontal bar chart
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: topUsers,
+            datasets: [{
+                label: 'Number of Assessments',
+                data: userData,
+                backgroundColor: gradient,
+                borderColor: '#2667cc',
+                borderWidth: 1,
+                borderRadius: 4,
+                barThickness: 16,
+                maxBarThickness: 20
+            }]
+        },
+        options: {
+            indexAxis: 'y', // Makes the bars horizontal
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                title: {
+                    display: false
+                },
+                tooltip: {
+                    backgroundColor: '#2b2d42',
+                    titleFont: {
+                        family: "'Inter', sans-serif",
+                        size: 14
+                    },
+                    bodyFont: {
+                        family: "'Inter', sans-serif",
+                        size: 13
+                    },
+                    padding: 12
+                }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Number of Assessments',
+                        font: {
+                            family: "'Inter', sans-serif",
+                            size: 13,
+                            weight: 'medium'
+                        }
+                    },
+                    grid: {
+                        display: true,
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    },
+                    ticks: {
+                        font: {
+                            family: "'Inter', sans-serif"
+                        }
+                    }
+                },
+                y: {
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        font: {
+                            family: "'Inter', sans-serif"
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Update the pie chart with improved colors
+function updatePieChart() {
+    const ctx = document.getElementById('pieChart').getContext('2d');
+    
+    // Group assessments by category
+    const categoryCounts = {};
+    const categoryLabels = [];
+    const categoryData = [];
+    const backgroundColors = [];
+    
+    // Initialize counters for each category
+    for (let categoryId in gameCategoryNames) {
+        categoryCounts[categoryId] = 0;
+    }
+    
+    // Count assessments by category
+    dashboardData.assessments.forEach(assessment => {
+        const categoryId = assessment.GameCategory;
+        
+        if (categoryId !== undefined) {
+            if (!categoryCounts[categoryId]) {
+                categoryCounts[categoryId] = 0;
+            }
+            
+            categoryCounts[categoryId]++;
+        }
+    });
+    
+    // Prepare data for chart
+    for (let categoryId in categoryCounts) {
+        if (categoryCounts[categoryId] > 0) {
+            categoryLabels.push(gameCategoryNames[categoryId] || `Category ${categoryId}`);
+            categoryData.push(categoryCounts[categoryId]);
+            backgroundColors.push(categoryColors[categoryId] || `hsl(${(categoryId * 60) % 360}, 70%, 50%)`);
+        }
+    }
+    
+    // Create pie chart
+    new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: categoryLabels,
+            datasets: [{
+                data: categoryData,
+                backgroundColor: backgroundColors,
+                borderColor: '#ffffff',
+                borderWidth: 2,
+                hoverOffset: 10
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: {
+                        boxWidth: 15,
+                        padding: 15,
+                        font: {
+                            family: "'Inter', sans-serif",
+                            size: 11
+                        }
+                    }
+                },
+                tooltip: {
+                    backgroundColor: '#2b2d42',
+                    titleFont: {
+                        family: "'Inter', sans-serif",
+                        size: 14
+                    },
+                    bodyFont: {
+                        family: "'Inter', sans-serif",
+                        size: 13
+                    },
+                    padding: 12
+                }
+            }
+        }
+    });
+}
+        
+        // Function to update the recent assessments table
+        function updateRecentAssessmentsTable() {
+            const tableBody = document.getElementById('recentAssessmentsBody');
+            
+            // Check if we have assessment data
+            if (!dashboardData.assessments || dashboardData.assessments.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="3">No assessment data available.</td></tr>';
+                return;
+            }
+            
+            // Sort assessments by date (newest first)
+            const sortedAssessments = [...dashboardData.assessments].sort((a, b) => 
+                parseFormattedDateTime(b.DataTimeStamp) - parseFormattedDateTime(a.DataTimeStamp)
+            );
+            
+            // Take only the most recent 10 assessments
+            const recentAssessments = sortedAssessments.slice(0, 10);
+            
+            // Generate table rows
+            let html = '';
+            
+            recentAssessments.forEach(assessment => {
+                const username = assessment.Username || 'Unknown';
+                const title = assessment.Title || 'Untitled Assessment';
+                const gameCategory = gameCategoryNames[assessment.GameCategory];
+                const date = formatDateTimeForDisplay(parseFormattedDateTime(assessment.DataTimeStamp));
+                
+                html += `
+                    <tr>
+                        <td>${username}</td>
+                        <td>${gameCategory}</td>
+                        <td>${title}</td>
+                        <td>${date}</td>
+                    </tr>
+                `;
+            });
+            
+            tableBody.innerHTML = html;
+        }
+        
+        // Helper function to parse date/time from formatted string
+        function parseFormattedDateTime(dateTimeStr) {
+            // Expected format: "yyyy-MM-dd_HH-mm-ss"
+            try {
+                if (!dateTimeStr) return new Date();
+                
+                const [datePart, timePart] = dateTimeStr.split('_');
+                const [year, month, day] = datePart.split('-').map(Number);
+                const [hours, minutes, seconds] = timePart.split('-').map(Number);
+                
+                // Month is 0-based in JavaScript Date (0 = Jan, 11 = Dec)
+                return new Date(year, month - 1, day, hours, minutes, seconds);
+            } catch (e) {
+                console.error('Error parsing date:', e);
+                return new Date();
+            }
+        }
+        
+        // Helper function to format date for display
+        function formatDateTimeForDisplay(date) {
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const month = months[date.getMonth()];
+            const day = date.getDate();
+            const year = date.getFullYear();
+            
+            // Format time with AM/PM
+            let hours = date.getHours();
+            const minutes = date.getMinutes().toString().padStart(2, '0');
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12;
+            hours = hours ? hours : 12; // Convert hour 0 to 12
+            
+            return `${month} ${day}, ${year} ${hours}:${minutes} ${ampm}`;
+        }
+        
+        // Function to display error message
+        function displayError(message) {
+            // Create error message element
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.textContent = message;
+            
+            // Add to container
+            const container = document.querySelector('.container');
+            container.appendChild(errorDiv);
+            
+            // Update stats cards with error indicator
+            document.getElementById('userCount').textContent = '-';
+            document.getElementById('lessonCount').textContent = '-';
+            document.getElementById('assessmentCount').textContent = '-';
+        }
+
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check authentication type and show/hide admin elements
+            checkUserRole();
+        });
+
+        // Function to check user role and show/hide admin elements
+        function checkUserRole() {
+            const adminAuth = JSON.parse(localStorage.getItem('adminAuth'));
+            const userAuth = JSON.parse(localStorage.getItem('userAuth'));
+            
+            // If admin is logged in, show admin-only elements
+            if (adminAuth) {
+                document.querySelectorAll('.admin-only').forEach(element => {
+                    element.style.display = 'block';
+                });
+                
+                // Update admin name display
+                const usernameElement = document.getElementById('currentUsername');
+                if (usernameElement && adminAuth.username) {
+                    usernameElement.textContent = adminAuth.username;
+                }
+            } 
+            // If regular user is logged in, keep admin elements hidden
+            else if (userAuth) {
+                // Update user name display
+                const usernameElement = document.getElementById('currentUsername');
+                if (usernameElement && userAuth.username) {
+                    usernameElement.textContent = userAuth.username;
+                }
+                
+                // Change "Admin:" text to "User:"
+                const adminNameElement = document.querySelector('.admin-name');
+                if (adminNameElement) {
+                    adminNameElement.innerHTML = 'User: <span id="currentUsername">' + (userAuth.username || 'user') + '</span>';
+                }
+            }
+        }
+    </script>
+    
+    <!-- Include Chart.js for visualizations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+</body>
+</html>

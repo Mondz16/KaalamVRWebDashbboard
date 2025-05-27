@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assessment Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="font.css">
+    <style>
+        .player-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .player-card {
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+        }
+        
+        .player-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .player-username-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .player-username {
+            font-weight: bold;
+            font-size: 1.2em;
+            margin-right: 8px;
+        }
+        
+        .gender-icon {
+            font-size: 1.2em;
+        }
+        
+        .player-id-age {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 8px;
+            display: flex;
+            gap: 15px;
+        }
+        
+        .player-profile-icon {
+            width: 50px;
+            height: 50px;
+            background-color: #f0f0f0;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+            font-size: 20px;
+            color: #555;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            font-style: italic;
+            color: #666;
+        }
+        
+        .error-message {
+            color: #d9534f;
+            padding: 10px;
+            background-color: #f9e6e6;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        
+        .refresh-btn {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        
+        .refresh-btn:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-logo">
+                <img src="assets/images/logo.png" alt="KaalamVR Logo" class="logo-image">
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li class="nav-item">
+                        <a href="index.html" class="nav-link">
+                            <span class="nav-icon">📊</span>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item active">
+                        <a href="student-performance.html" class="nav-link">
+                            <span class="nav-icon">👥</span>
+                            Student Performance
+                        </a>
+                    </li>
+                    <li class="nav-item admin-only">
+                        <a href="assessment.html" class="nav-link">
+                            <span class="nav-icon">📝</span>
+                            Assessments
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            
+            <div class="admin-info">
+                <div class="admin-profile">
+                    <span class="admin-avatar">👤</span>
+                    <span class="admin-name">Admin: <span id="currentUsername">admin</span></span>
+                </div>
+                <button id="logoutButton" class="logout-button">
+                    <span class="logout-icon">🚪</span>
+                    Log Out
+                </button>
+            </div>
+            
+            <div class="sidebar-footer">
+                <p>&copy; 2025 MindTech</p>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div class="container">
+                <h1>Student Performance</h1>
+
+                <input type="text" id="usernameSearch" placeholder="Search by Username" style="padding: 10px; margin-top: 20px; width: 100%; max-width: 400px; border-radius: 4px; border: 1px solid #ccc;">
+                <button id="refreshBtn" class="refresh-btn">Refresh Student List</button>
+                
+                <div id="playersContainer">
+                    <div class="loading">Loading student data...</div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="auth-guard.js"></script>
+    <script>
+        document.getElementById('usernameSearch').addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const playerCards = document.querySelectorAll('.player-card');
+            
+            playerCards.forEach(card => {
+                const username = card.querySelector('.player-username')?.innerText.toLowerCase() || '';
+                card.style.display = username.includes(searchTerm) ? 'block' : 'none';
+            });
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Fetch players when page loads
+            fetchPlayers();
+            
+            // Set up refresh button
+            document.getElementById('refreshBtn').addEventListener('click', fetchPlayers);
+        });
+        
+        // Function to fetch players from the API
+        function fetchPlayers() {
+            document.getElementById('usernameSearch').value = '';
+            const playersContainer = document.getElementById('playersContainer');
+            playersContainer.innerHTML = '<div class="loading">Loading student data...</div>';
+            
+            fetch('http://localhost:3001/api/getPlayers')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    processAndDisplayPlayers(data);
+                })
+                .catch(error => {
+                    console.error('Error fetching players:', error);
+                    playersContainer.innerHTML = `
+                        <div class="error-message">
+                            Failed to load student data. Please check your connection and try again.
+                            <p>Error: ${error.message}</p>
+                        </div>
+                    `;
+                });
+        }
+        
+        // Function to process and display the fetched players with their detailed data
+        async function processAndDisplayPlayers(playersData) {
+            const playersContainer = document.getElementById('playersContainer');
+            
+            // Check if we have players data
+            if (!playersData || !playersData.results || playersData.results.length === 0) {
+                playersContainer.innerHTML = '<p>No students found.</p>';
+                return;
+            }
+            
+            // Clear the container and show loading message
+            playersContainer.innerHTML = '<div class="loading">Fetching detailed student data...</div>';
+            
+            // Create a grid for the player cards
+            const playerGrid = document.createElement('div');
+            playerGrid.className = 'player-grid';
+            
+            // Array to store promises for all player data fetches
+            const playerDataPromises = [];
+            
+            // For each player, fetch their detailed data
+            for (const player of playersData.results) {
+                const playerId = player.id;
+                const promise = fetch(`http://localhost:3001/api/getPlayerData/${playerId}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`Failed to fetch data for player ${playerId}`);
+                        }
+                        return response.json();
+                    })
+                    .then(playerData => {
+                        return { playerId, playerData };
+                    })
+                    .catch(error => {
+                        console.error(`Error fetching data for player ${playerId}:`, error);
+                        return { playerId, error };
+                    });
+                
+                playerDataPromises.push(promise);
+            }
+            
+            // Wait for all player data to be fetched
+            const playerResults = await Promise.all(playerDataPromises);
+            
+            // Clear the loading message
+            playersContainer.innerHTML = '';
+            
+            // Process each player's data and create cards
+            playerResults.forEach(result => {
+                const { playerId, playerData, error } = result;
+                
+                // Skip players with errors
+                if (error) {
+                    console.warn(`Skipping player ${playerId} due to error:`, error);
+                    return;
+                }
+                
+                // Find the Data item with key "Data"
+                const dataItem = playerData.results ? playerData.results.find(item => item.key === "Data") : null;
+                
+                // If no data found, skip this player
+                if (!dataItem || !dataItem.value) {
+                    console.warn(`No data found for player ${playerId}`);
+                    return;
+                }
+                
+                try {
+                    // Parse the JSON data
+                    const parsedData = JSON.parse(dataItem.value);
+                    
+                    // Check if GameDataList exists and has entries
+                    if (!parsedData.GameDataList || !parsedData.GameDataList.length) {
+                        console.warn(`No GameDataList found for player ${playerId}`);
+                        return;
+                    }
+                    
+                    // Process each user in the GameDataList
+                    parsedData.GameDataList.forEach((gameData, index) => {
+                        // Check if UserData exists
+                        if (!gameData.UserData) {
+                            console.warn(`No UserData found in GameDataList[${index}] for player ${playerId}`);
+                            return;
+                        }
+                        
+                        // Create a card for this user
+                        const userData = gameData.UserData;
+                        const assessmentData = gameData.AssessmentDataList || [];
+                        
+                        // Generate a unique ID for this user (combination of playerId and UserID)
+                        const uniqueUserId = `${playerId}-${userData.UserID || index}`;
+                        
+                        // Create the player card and add it to the grid
+                        const playerCard = createPlayerCard(uniqueUserId, userData, assessmentData, playerId);
+                        playerGrid.appendChild(playerCard);
+                    });
+                } catch (e) {
+                    console.error(`Error parsing data for player ${playerId}:`, e);
+                }
+            });
+            
+            // Add the grid to the container
+            if (playerGrid.children.length > 0) {
+                playersContainer.appendChild(playerGrid);
+            } else {
+                playersContainer.innerHTML = '<p>No student data found.</p>';
+            }
+        }
+        
+        // Function to create a player card with UserData
+        // Function to create a player card with UserData
+        // Function to create a player card with UserData
+        function createPlayerCard(uniqueUserId, userData, assessmentData, playerId) {
+            const playerCard = document.createElement('div');
+            playerCard.className = 'player-card';
+            playerCard.dataset.uniqueUserId = uniqueUserId;
+            playerCard.dataset.id = playerId;
+            
+            // Get player information
+            const username = userData.Username || 'Unknown';
+            const userId = userData.UserID || 'N/A';
+            const profileIconId = userData.UserProfileIconID || 0;
+            const gender = userData.Gender;
+            const age = userData.Age || 'NA';
+            
+            // Create profile icon
+            const profileIcon = document.createElement('div');
+            profileIcon.className = 'player-profile-icon';
+            profileIcon.innerText = username.charAt(0).toUpperCase();
+            
+            // Create username and gender container
+            const usernameContainer = document.createElement('div');
+            usernameContainer.className = 'player-username-container';
+            
+            // Create username element
+            const usernameElement = document.createElement('div');
+            usernameElement.className = 'player-username';
+            usernameElement.innerText = username;
+            
+            // Create gender icon
+            const genderIcon = document.createElement('div');
+            genderIcon.className = 'gender-icon';
+            
+            if (gender === 0) {
+                genderIcon.innerText = '♂️';
+            } else if (gender === 1) {
+                genderIcon.innerText = '♀️';
+            } else {
+                genderIcon.innerText = '⚪';
+            }
+            
+            // Add username and gender to container
+            usernameContainer.appendChild(usernameElement);
+            usernameContainer.appendChild(genderIcon);
+            
+            // Create ID and age elements in one line
+            const idAgeElement = document.createElement('div');
+            idAgeElement.className = 'player-id-age';
+            
+            const idSpan = document.createElement('span');
+            idSpan.innerText = `Device ID: ${playerId.length > 5 ? playerId.substring(0, 5) + '...' : playerId}`;
+            
+            idAgeElement.appendChild(idSpan);
+            
+            if(age !== 'NA'){
+                const ageSpan = document.createElement('span');
+                ageSpan.innerText = `Age: ${age}`;
+                idAgeElement.appendChild(ageSpan);
+            }
+            
+            // Add elements to card
+            playerCard.appendChild(profileIcon);
+            playerCard.appendChild(usernameContainer);
+            playerCard.appendChild(idAgeElement);
+            
+            // Add click event to redirect to detail page
+            playerCard.addEventListener('click', () => {
+                window.location.href = `student-detail.html?playerId=${playerId}&uniqueUserId=${uniqueUserId}&username=${encodeURIComponent(username)}`;
+            });
+            
+            return playerCard;
+        }
+        
+        // Helper function to get game category name
+        function getGameCategoryName(categoryId) {
+            const categories = {
+                0: 'None',
+                1: 'Analyzing Literature',
+                2: 'Modals',
+                3: 'Verb Forms',
+                4: 'Vocabulary',
+                5: 'Making Connection'
+                // Add more categories as needed
+            };
+            
+            return categories[categoryId] || `Category ${categoryId}`;
+        }
+        
+        // Helper function to get assessment type name (kept for consistency)
+        function getAssessmentTypeName(typeId) {
+            const types = {
+                0: 'None',
+                1: 'Grab And Place',
+                2: 'Paragraph Grab And Place',
+                3: 'Sliding Puzzle',
+                4: 'Slice Game',
+                5: 'Categorize Answers',   
+                6: 'Grab and Throw',
+                7: 'Graphic Organizer',
+                // Add more types as needed
+            };
+            
+            return types[typeId] || `Type ${typeId}`;
+        }
+    </script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check authentication type and show/hide admin elements
+            checkUserRole();
+        });
+
+        // Function to check user role and show/hide admin elements
+        function checkUserRole() {
+            const adminAuth = JSON.parse(localStorage.getItem('adminAuth'));
+            const userAuth = JSON.parse(localStorage.getItem('userAuth'));
+            
+            // If admin is logged in, show admin-only elements
+            if (adminAuth) {
+                document.querySelectorAll('.admin-only').forEach(element => {
+                    element.style.display = 'block';
+                });
+                
+                // Update admin name display
+                const usernameElement = document.getElementById('currentUsername');
+                if (usernameElement && adminAuth.username) {
+                    usernameElement.textContent = adminAuth.username;
+                }
+            } 
+            // If regular user is logged in, keep admin elements hidden
+            else if (userAuth) {
+                // Update user name display
+                const usernameElement = document.getElementById('currentUsername');
+                if (usernameElement && userAuth.username) {
+                    usernameElement.textContent = userAuth.username;
+                }
+                
+                // Change "Admin:" text to "User:"
+                const adminNameElement = document.querySelector('.admin-name');
+                if (adminNameElement) {
+                    adminNameElement.innerHTML = 'User: <span id="currentUsername">' + (userAuth.username || 'user') + '</span>';
+                }
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,1618 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Student Assessment Details</title>
+    <link rel="stylesheet" href="font.css" />
+    <style>
+      /* Original styles remain unchanged */
+      .assessment-list {
+        margin-top: 20px;
+      }
+
+      .assessment-item {
+        background-color: #f9f9f9;
+        padding: 15px;
+        border-radius: 6px;
+        margin-bottom: 10px;
+      }
+
+      .assessment-title {
+        font-weight: bold;
+        margin-bottom: 5px;
+      }
+
+      .assessment-score {
+        color: #4caf50;
+        font-weight: bold;
+      }
+
+      .assessment-details {
+        margin-top: 10px;
+        display: none; /* Hidden by default */
+      }
+
+      /* Style for collapse/expand button */
+      .toggle-questions {
+        background-color: #ddd;
+        border: none;
+        color: #333;
+        padding: 5px 10px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 12px;
+        margin: 10px 0;
+        cursor: pointer;
+        border-radius: 4px;
+        transition: background-color 0.3s;
+      }
+
+      .toggle-questions:hover {
+        background-color: #ccc;
+      }
+
+      .toggle-questions.active {
+        background-color: #4caf50;
+        color: white;
+      }
+
+      /* Category filter styles */
+      .category-filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin: 20px 0;
+      }
+
+      .category-btn {
+        background-color: #f0f0f0;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 8px 15px;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 14px;
+      }
+
+      .category-btn:hover {
+        background-color: #e0e0e0;
+      }
+
+      .category-btn.active {
+        background-color: #4caf50;
+        color: white;
+        border-color: #4caf50;
+      }
+
+      .no-assessments-msg {
+        font-style: italic;
+        color: #666;
+        margin-top: 10px;
+      }
+
+      .back-btn {
+        background-color: #2196f3;
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-top: 20px;
+        margin-bottom: 20px;
+      }
+
+      .back-btn:hover {
+        background-color: #0b7dda;
+      }
+
+      .loading {
+        text-align: center;
+        padding: 20px;
+        font-style: italic;
+        color: #666;
+      }
+
+      .error-message {
+        color: #d9534f;
+        padding: 10px;
+        background-color: #f9e6e6;
+        border-radius: 5px;
+        margin-top: 20px;
+      }
+
+      /* Badge for question count */
+      .question-count {
+        background-color: #2196f3;
+        color: white;
+        border-radius: 12px;
+        padding: 2px 8px;
+        font-size: 12px;
+        margin-left: 5px;
+      }
+
+      /* Transition for collapsible content */
+      .assessment-details {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease-out;
+      }
+
+      .assessment-details.expanded {
+        display: contents;
+        max-height: 1000px; /* Large enough to accommodate content */
+        transition: max-height 0.5s ease-in;
+      }
+
+      /* Styles for the graph */
+      .graph-container {
+        margin: 20px 0;
+        background: #fff;
+        padding: 15px;
+        border-radius: 6px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        position: relative; /* Required for tooltip positioning */
+      }
+
+      canvas {
+        width: 100%;
+        height: 700px;
+        border: 1px solid #eee;
+        margin-top: 10px;
+      }
+
+      .graph-title {
+        font-weight: bold;
+        margin-bottom: 10px;
+        font-size: 16px;
+        color: #333;
+      }
+
+      .no-data-msg {
+        text-align: center;
+        font-style: italic;
+        color: #666;
+        padding: 20px;
+      }
+
+      /* Tooltip styles */
+      .graph-tooltip {
+        position: absolute;
+        background-color: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 8px 12px;
+        border-radius: 4px;
+        font-size: 12px;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.2s;
+        z-index: 100;
+        white-space: nowrap;
+      }
+
+      .graph-tooltip.visible {
+        opacity: 1;
+      }
+
+      /* FIX: Make the page scrollable */
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow-y: auto !important;
+      }
+
+      .app-container {
+        display: flex;
+        min-height: 100%;
+      }
+
+      .main-content {
+        overflow-y: auto;
+        padding-bottom: 40px; /* Add space at the bottom for better scrolling */
+      }
+
+      .table-pagination {
+        margin-bottom: 15px;
+        display: flex;
+        justify-content: center;
+      }
+
+      .pagination-controls {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      .pagination-btn {
+        background: #f8f9fa;
+        border: 1px solid #ddd;
+        padding: 5px 10px;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.2s;
+        min-width: 35px;
+      }
+
+      .pagination-btn:hover {
+        background: #e9ecef;
+      }
+
+      .pagination-btn.active {
+        background: #4caf50;
+        color: white;
+        border-color: #4caf50;
+      }
+
+      .table-wrapper {
+        overflow-x: auto;
+      }
+    </style>
+    
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="app-container">
+      <aside class="sidebar">
+        <div class="sidebar-logo">
+            <img src="assets/images/logo.png" alt="KaalamVR Logo" class="logo-image">
+        </div>
+        <nav class="sidebar-nav">
+            <ul>
+                <li class="nav-item">
+                    <a href="index.html" class="nav-link">
+                        <span class="nav-icon">📊</span>
+                        Dashboard
+                    </a>
+                </li>
+                <li class="nav-item active">
+                    <a href="student-performance.html" class="nav-link">
+                        <span class="nav-icon">👥</span>
+                        Student Performance
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="assessment.html" class="nav-link">
+                        <span class="nav-icon">📝</span>
+                        Assessments
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        
+        <div class="admin-info">
+            <div class="admin-profile">
+                <span class="admin-avatar">👤</span>
+                <span class="admin-name">Admin: <span id="currentUsername">admin</span></span>
+            </div>
+            <button id="logoutButton" class="logout-button">
+                <span class="logout-icon">🚪</span>
+                Log Out
+            </button>
+        </div>
+        
+        <div class="sidebar-footer">
+            <p>&copy; 2025 MindTech</p>
+        </div>
+    </aside>
+
+      <main class="main-content">
+        <div class="container">
+          <button id="backBtn" class="back-btn">← Back to Student List</button>
+
+          <h1>
+            <span id="studentName">Loading student data...</span>'s Performance
+            Details
+          </h1>
+          <!-- Add graph container here -->
+          <div id="graphContainer" class="graph-container">
+            <div id="graphContent">
+              <div class="loading">Loading graph data...</div>
+            </div>
+            <!-- Tooltip element for hover information -->
+            <div id="graphTooltip" class="graph-tooltip"></div>
+          </div>
+
+          <div id="categoryFilters" class="category-filters">
+            <!-- Category filter buttons will be added here dynamically -->
+          </div>
+
+          <div id="assessmentContent">
+            <div class="loading">Loading assessment data...</div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script src="auth-guard.js"></script>
+    <script>
+      // Global variables
+      let assessmentData = [];
+      let currentCategoryFilter = "all";
+      let graphPoints = []; // Store points for hover detection
+      let activeLines = new Set(); // Track which lines are active
+
+      document.addEventListener("DOMContentLoaded", function () {
+        // Get parameters from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const playerId = urlParams.get("playerId");
+        const username = urlParams.get("username");
+        const uniqueUserId = urlParams.get("uniqueUserId");
+
+        // Set up back button
+        document
+          .getElementById("backBtn")
+          .addEventListener("click", function () {
+            window.location.href = "student-performance.html";
+          });
+
+        // If we have a playerId, fetch the data
+        if (playerId) {
+          fetchPlayerAssessments(playerId, uniqueUserId, username);
+        } else {
+          displayError(
+            "No student ID provided. Please go back and select a student."
+          );
+        }
+
+        // Add event delegation for toggle buttons (added later)
+        document
+          .getElementById("assessmentContent")
+          .addEventListener("click", function (e) {
+            if (e.target && e.target.classList.contains("toggle-questions")) {
+              const assessmentDetails = e.target.nextElementSibling;
+
+              // Toggle visibility
+              assessmentDetails.classList.toggle("expanded");
+
+              // Update button text
+              if (assessmentDetails.classList.contains("expanded")) {
+                e.target.textContent = "Hide Questions";
+                e.target.classList.add("active");
+              } else {
+                e.target.textContent = "Show Questions";
+                e.target.classList.remove("active");
+              }
+            }
+          });
+      });
+
+      // Function to fetch player assessments
+      function fetchPlayerAssessments(playerId, uniqueUserId, username) {
+        document.getElementById("studentName").innerText =
+          username || "Student";
+
+        fetch(`http://localhost:3001/api/getPlayerData/${playerId}`)
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error("Network response was not ok");
+            }
+            return response.json();
+          })
+          .then((playerData) => {
+            processPlayerData(playerData, uniqueUserId, username);
+          })
+          .catch((error) => {
+            console.error("Error fetching player data:", error);
+            displayError(
+              `Failed to load student data. Please check your connection and try again. Error: ${error.message}`
+            );
+          });
+      }
+
+      // Function to process player data and extract assessment information
+      function processPlayerData(playerData, uniqueUserId, username) {
+        // Find the Data item with key "Data"
+        const dataItem = playerData.results
+          ? playerData.results.find((item) => item.key === "Data")
+          : null;
+
+        // If no data found, display error
+        if (!dataItem || !dataItem.value) {
+          displayError("No data found for this student.");
+          return;
+        }
+
+        try {
+          // Parse the JSON data
+          const parsedData = JSON.parse(dataItem.value);
+
+          // Check if GameDataList exists and has entries
+          if (!parsedData.GameDataList || !parsedData.GameDataList.length) {
+            displayError("No game data found for this student.");
+            return;
+          }
+
+          // Find the correct user entry in GameDataList
+          // Extract unique userId from uniqueUserId (format: playerId-userId)
+          const userId = uniqueUserId.split("-")[1];
+
+          // Find the user in GameDataList
+          let userData = null;
+          let userAssessments = [];
+
+          for (const gameData of parsedData.GameDataList) {
+            if (
+              gameData.UserData &&
+              (gameData.UserData.UserID == userId || !userId)
+            ) {
+              userData = gameData.UserData;
+              userAssessments = gameData.AssessmentDataList || [];
+              break;
+            }
+          }
+
+          // If no matching user found, display error
+          if (!userData) {
+            displayError("User data not found.");
+            return;
+          }
+
+          // Save the assessment data and display it
+          assessmentData = userAssessments;
+
+          // Create category filters
+          createCategoryFilters(userAssessments);
+
+          // Display all assessments
+          renderAssessments(userAssessments, userData.Username || username);
+
+          // Draw the performance graph
+          renderPerformanceGraph(userAssessments);
+        } catch (e) {
+          console.error("Error parsing player data:", e);
+          displayError(`Error processing data: ${e.message}`);
+        }
+      }
+
+      // Function to create category filter buttons
+      function createCategoryFilters(assessmentData) {
+        const filterContainer = document.getElementById("categoryFilters");
+        filterContainer.innerHTML = "";
+
+        // Get unique categories from assessment data
+        const categories = new Set();
+        assessmentData.forEach((assessment) => {
+          if (assessment.GameCategory !== undefined) {
+            categories.add(assessment.GameCategory);
+          }
+        });
+
+        // CHANGE 1: Removed "All Categories" button
+
+        // Create button for each category
+        categories.forEach((categoryId) => {
+          const button = document.createElement("button");
+          button.className = "category-btn";
+
+          // Make the first category active by default
+          if (categories.size > 0 && categoryId === [...categories][0]) {
+            button.classList.add("active");
+            // Update current filter to this category
+            currentCategoryFilter = categoryId;
+          }
+
+          button.innerText = getGameCategoryName(categoryId);
+          button.dataset.category = categoryId;
+          button.addEventListener("click", function () {
+            filterByCategory(categoryId, this);
+          });
+          filterContainer.appendChild(button);
+        });
+
+        // If we have categories, automatically filter by the first one
+        if (categories.size > 0) {
+          const firstCategory = [...categories][0];
+          currentCategoryFilter = firstCategory;
+          // Re-render with the current filter
+          const username = document.getElementById("studentName").innerText;
+          renderAssessments(assessmentData, username);
+          renderPerformanceGraph(assessmentData);
+        }
+      }
+
+      // Function to filter assessments by category
+      function filterByCategory(categoryId, buttonElement) {
+        // Update active button
+        const buttons = document.querySelectorAll(".category-btn");
+        buttons.forEach((btn) => btn.classList.remove("active"));
+        buttonElement.classList.add("active");
+
+        // Update current filter
+        currentCategoryFilter = categoryId;
+
+        // Display filtered assessments
+        const username = document.getElementById("studentName").innerText;
+        renderAssessments(assessmentData, username);
+
+        // Update the graph with filtered data
+        renderPerformanceGraph(assessmentData);
+      }
+
+      // Function to render the performance graph
+      function renderPerformanceGraph(assessments) {
+        const graphContent = document.getElementById("graphContent");
+        const graphContainer = document.getElementById("graphContainer");
+
+        // Check if we have assessment data
+        if (!assessments || assessments.length === 0) {
+          graphContent.innerHTML =
+            '<div class="no-data-msg">No assessment data available to display graph.</div>';
+          return;
+        }
+
+        // Filter assessments by category if needed
+        let filteredAssessments = assessments;
+        if (currentCategoryFilter !== "all") {
+          filteredAssessments = assessments.filter(
+            (assessment) => assessment.GameCategory == currentCategoryFilter
+          );
+        }
+
+        // Check if we have any assessments after filtering
+        if (filteredAssessments.length === 0) {
+          graphContent.innerHTML = `<div class="no-data-msg">No assessment data found for category: ${getGameCategoryName(
+            currentCategoryFilter
+          )}</div>`;
+          return;
+        }
+
+        // Group assessments by category and title
+        const groupedAssessments = {};
+
+        filteredAssessments.forEach((assessment) => {
+          const categoryId = assessment.GameCategory;
+          const title = assessment.Title || "Untitled Assessment";
+          const key = `${categoryId}:${title}`;
+
+          if (!groupedAssessments[key]) {
+            groupedAssessments[key] = {
+              assessments: [],
+              categoryId: categoryId,
+              categoryName: getGameCategoryName(categoryId),
+              title: title,
+              // CHANGE 2: Each line gets its own unique color regardless of category
+              color: getUniqueColor(Object.keys(groupedAssessments).length),
+            };
+          }
+
+          groupedAssessments[key].assessments.push(assessment);
+        });
+
+        // Create canvas for the graph
+        graphContent.innerHTML = '<canvas id="scoreChart"></canvas>';
+        const canvas = document.getElementById("scoreChart");
+        const ctx = canvas.getContext("2d");
+
+        // Set canvas dimensions (important for proper scaling)
+        canvas.width = canvas.offsetWidth;
+        canvas.height = canvas.offsetHeight;
+
+        // Draw graph with multiple lines
+        drawMultiLineGraph(
+          ctx,
+          groupedAssessments,
+          canvas.width,
+          canvas.height
+        );
+
+        // Add event listeners for hover functionality
+        setupMultilineHoverFunctionality(
+          canvas,
+          groupedAssessments,
+          graphContainer
+        );
+      }
+
+      // CHANGE 2: New function to generate unique colors for each line
+      function getUniqueColor(index) {
+        // Array of distinct colors
+        const colors = [
+          "#FF5733", // Red-Orange
+          "#33FF57", // Green
+          "#3357FF", // Blue
+          "#FF33F5", // Pink
+          "#33FFF5", // Cyan
+          "#F5FF33", // Yellow
+          "#AA33FF", // Purple
+          "#FF8C33", // Orange
+          "#33FFAA", // Mint
+          "#8C33FF", // Violet
+          "#FF3380", // Hot Pink
+          "#33FF8C", // Light Green
+          "#8C8C8C", // Gray
+          "#FF5733", // Red-Orange repeated with variations
+          "#33AA57", // Dark Green
+          "#3333FF", // Deep Blue
+        ];
+
+        // Return color by index, or a generated color if we run out
+        if (index < colors.length) {
+          return colors[index];
+        } else {
+          // Generate a random color for overflow
+          return `hsl(${(index * 60) % 360}, 70%, 50%)`;
+        }
+      }
+
+      // Function to draw multiple line graphs
+      function drawMultiLineGraph(ctx, groupedData, width, height) {
+        // Clear canvas
+        ctx.clearRect(0, 0, width, height);
+
+        // Reset global points array
+        graphPoints = [];
+
+        // Set padding
+        const padding = 40;
+        const graphWidth = width - padding * 2;
+        const graphHeight = height - padding * 2;
+
+        // If no data, show message
+        if (Object.keys(groupedData).length === 0) {
+          ctx.font = "14px Arial";
+          ctx.fillStyle = "#666";
+          ctx.textAlign = "center";
+          ctx.fillText("No data available", width / 2, height / 2);
+          return;
+        }
+
+        // Find min and max scores for y-axis scaling (always use 0 as minimum)
+        const minScore = 0;
+        let maxScore = 0;
+
+        // Find the max number of assessments in any series (for x-axis)
+        let maxAssessmentCount = 0;
+
+        // Process each series to find max values
+        Object.values(groupedData).forEach((group) => {
+          // Sort by date (oldest first)
+          group.assessments.sort(
+            (a, b) =>
+              parseFormattedDateTime(a.DataTimeStamp) -
+              parseFormattedDateTime(b.DataTimeStamp)
+          );
+
+          // Update max assessment count
+          maxAssessmentCount = Math.max(
+            maxAssessmentCount,
+            group.assessments.length
+          );
+
+          // Update max score
+          group.assessments.forEach((assessment) => {
+            maxScore = Math.max(maxScore, assessment.Score || 0);
+          });
+        });
+
+        // Ensure maximum score is at least 100 for proper scaling
+        maxScore = Math.max(maxScore, 10) + 10;
+
+        // Draw axes
+        ctx.beginPath();
+        ctx.strokeStyle = "#888";
+        ctx.lineWidth = 1;
+
+        // Draw y-axis
+        ctx.moveTo(padding, padding);
+        ctx.lineTo(padding, height - padding);
+
+        // Draw x-axis
+        ctx.moveTo(padding, height - padding);
+        ctx.lineTo(width - padding, height - padding);
+        ctx.stroke();
+
+        // Draw y-axis labels and grid lines
+        ctx.font = "10px Arial";
+        ctx.fillStyle = "#666";
+        ctx.textAlign = "right";
+
+        const yStep = maxScore > 100 ? 20 : 10; // Adjust step size based on max score
+
+        // Start y-axis labels from 0
+        for (let score = 0; score <= maxScore; score += yStep) {
+          const y = height - padding - (score / maxScore) * graphHeight;
+
+          // Draw grid line
+          ctx.beginPath();
+          ctx.strokeStyle = "#eee";
+          ctx.moveTo(padding, y);
+          ctx.lineTo(width - padding, y);
+          ctx.stroke();
+
+          // Draw label
+          ctx.fillText(score, padding - 5, y + 3);
+        }
+
+        // Draw x-axis labels (assessment numbers)
+        ctx.textAlign = "center";
+
+        // Determine step size for x labels (avoid overcrowding)
+        const maxLabels = Math.min(10, maxAssessmentCount);
+        const xLabelStep = Math.ceil(maxAssessmentCount / maxLabels);
+
+        for (let i = 0; i <= maxAssessmentCount; i++) {
+            if (i % xLabelStep === 0 || i === 0 || i === maxAssessmentCount) {
+                const x = padding + (i / maxAssessmentCount * graphWidth);
+                
+                // Draw grid line
+                ctx.beginPath();
+                ctx.strokeStyle = '#eee';
+                ctx.moveTo(x, padding);
+                ctx.lineTo(x, height - padding);
+                ctx.stroke();
+                
+                // Draw assessment number
+                ctx.fillText(`#${i}`, x, height - padding + 15);
+            }
+        }
+
+        // Draw legend
+        drawLegend(ctx, groupedData, width, padding);
+
+        // Draw data lines for each group
+        Object.values(groupedData).forEach((group) => {
+          // Skip if no assessments or if line is not active
+          const key = `${group.categoryId}:${group.title}`;
+          if (group.assessments.length === 0 || !activeLines.has(key)) return;
+
+          // Draw lines connecting points
+          ctx.beginPath();
+          ctx.strokeStyle = group.color;
+          ctx.lineWidth = 2;
+
+          // Start at (0,0)
+          ctx.moveTo(padding, height - padding);
+
+          group.assessments.forEach((assessment, i) => {
+            const assessmentNumber = i + 1;
+            const x = padding + (assessmentNumber / maxAssessmentCount * graphWidth);
+            const y = height - padding - ((assessment.Score || 0) / maxScore * graphHeight);
+
+            ctx.lineTo(x, y);
+
+            // Store point data for hover functionality
+            graphPoints.push({
+              x: x,
+              y: y,
+              score: assessment.Score || 0,
+              date: parseFormattedDateTime(assessment.DataTimeStamp),
+              title: assessment.Title || "Untitled Assessment",
+              categoryName: group.categoryName,
+              color: group.color,
+              assessmentNumber: assessmentNumber,
+              seriesKey: `${group.categoryId}:${group.title}`,
+            });
+          });
+
+          ctx.stroke();
+
+          // Draw data points
+          group.assessments.forEach((assessment, i) => {
+            const assessmentNumber = i + 1;
+            const x = padding + (assessmentNumber / maxAssessmentCount * graphWidth);
+            const y = height - padding - ((assessment.Score || 0) / maxScore * graphHeight);
+
+            // Draw point
+            ctx.beginPath();
+            ctx.fillStyle = group.color;
+            ctx.arc(x, y, 4, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = "#fff";
+            ctx.lineWidth = 1;
+            ctx.stroke();
+          });
+        });
+
+        // Draw graph title
+        ctx.font = "14px Arial";
+        ctx.fillStyle = "#333";
+        ctx.textAlign = "center";
+        ctx.fillText(
+          "Student Assessment Performance by Category",
+          width / 2,
+          padding - 15
+        );
+      }
+
+      // Function to draw the legend
+      function drawLegend(ctx, groupedData, width, topPadding) {
+        const groups = Object.values(groupedData);
+        if (groups.length === 0) return;
+
+        const legendX = width - 250; // Position on right side
+        let legendY = topPadding + 20;
+
+        // Draw legend background
+        ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+        ctx.fillRect(legendX - 10, legendY - 15, 210, 20 + groups.length * 20);
+        ctx.strokeStyle = "#ddd";
+        ctx.strokeRect(
+          legendX - 10,
+          legendY - 15,
+          210,
+          20 + groups.length * 20
+        );
+
+        // Draw legend title
+        ctx.fillStyle = "#333";
+        ctx.font = "12px Arial";
+        ctx.textAlign = "left";
+        ctx.fillText("Legend (Click to toggle)", legendX, legendY);
+        legendY += 5;
+
+        // Draw legend items
+        groups.forEach((group, index) => {
+          legendY += 15;
+          const key = `${group.categoryId}:${group.title}`;
+          const isActive = activeLines.has(key);
+
+          // Draw checkbox
+          ctx.beginPath();
+          ctx.strokeStyle = "#666";
+          ctx.lineWidth = 1;
+          ctx.rect(legendX, legendY - 10, 10, 10);
+          ctx.stroke();
+          
+          if (isActive) {
+            ctx.fillStyle = group.color;
+            ctx.fillRect(legendX + 2, legendY - 8, 6, 6);
+          }
+
+          // Draw color indicator
+          ctx.beginPath();
+          ctx.fillStyle = isActive ? group.color : "#ccc";
+          ctx.arc(legendX + 20, legendY - 5, 5, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Draw label
+          ctx.fillStyle = isActive ? "#333" : "#999";
+          ctx.font = "11px Arial";
+          ctx.fillText(
+            `${group.categoryName}: ${group.title}`,
+            legendX + 30,
+            legendY
+          );
+
+          // Store clickable area for this legend item
+          group.legendArea = {
+            x: legendX,
+            y: legendY - 15,
+            width: 200,
+            height: 20,
+            key: key
+          };
+        });
+      }
+
+      // Add this function to handle legend clicks
+      function handleLegendClick(canvas, e, groupedData) {
+        const rect = canvas.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        const clickY = e.clientY - rect.top;
+
+        // Check if click is within any legend item area
+        Object.values(groupedData).forEach(group => {
+          if (group.legendArea) {
+            const area = group.legendArea;
+            if (
+              clickX >= area.x &&
+              clickX <= area.x + area.width &&
+              clickY >= area.y &&
+              clickY <= area.y + area.height
+            ) {
+              // Toggle the line
+              if (activeLines.has(area.key)) {
+                activeLines.delete(area.key);
+              } else {
+                activeLines.add(area.key);
+              }
+              
+              // Redraw the graph
+              const ctx = canvas.getContext('2d');
+              drawMultiLineGraph(ctx, groupedData, canvas.width, canvas.height);
+            }
+          }
+        });
+      }
+
+      // Modify the setupMultilineHoverFunctionality function to include click handling
+      function setupMultilineHoverFunctionality(canvas, groupedData, container) {
+        const tooltip = document.getElementById("graphTooltip");
+
+        // Initialize activeLines with all lines
+        activeLines.clear();
+        Object.values(groupedData).forEach(group => {
+          activeLines.add(`${group.categoryId}:${group.title}`);
+        });
+
+        // Add click event listener for legend
+        canvas.addEventListener("click", function(e) {
+          handleLegendClick(canvas, e, groupedData);
+        });
+
+        // Add mouse move event listener
+        canvas.addEventListener("mousemove", function (e) {
+          const rect = canvas.getBoundingClientRect();
+          const mouseX = e.clientX - rect.left;
+          const mouseY = e.clientY - rect.top;
+
+          // Check if mouse is over any point
+          let hoverPoint = null;
+          let closestDistance = Infinity;
+
+          for (let point of graphPoints) {
+            const distance = Math.sqrt(
+              Math.pow(mouseX - point.x, 2) + Math.pow(mouseY - point.y, 2)
+            );
+            if (distance <= 10 && distance < closestDistance) {
+              // Find closest point within range
+              hoverPoint = point;
+              closestDistance = distance;
+            }
+          }
+
+          // Update tooltip
+          if (hoverPoint) {
+            const formattedDate = formatDateTimeForTooltip(hoverPoint.date);
+            tooltip.innerHTML = `
+                <div style="border-left: 4px solid ${hoverPoint.color}; padding-left: 5px;">
+                    <strong>${hoverPoint.title}</strong><br>
+                    Category: ${hoverPoint.categoryName}<br>
+                    Assessment Take #${hoverPoint.assessmentNumber}<br>
+                    ${formattedDate}<br>
+                    Score: ${hoverPoint.score}
+                </div>`;
+
+            // Update tooltip style for better visibility
+            tooltip.style.backgroundColor = "rgba(255, 255, 255, 0.95)";
+            tooltip.style.border = "1px solid #ccc";
+            tooltip.style.boxShadow = "0 2px 5px rgba(0,0,0,0.2)";
+            tooltip.style.padding = "8px";
+            tooltip.style.borderRadius = "4px";
+            tooltip.style.fontSize = "12px";
+            tooltip.style.color = "#333";
+
+            // Position tooltip near the point, but ensure it stays within viewport
+            const tooltipWidth = 200; // Approximate width
+            const tooltipHeight = 100; // Approximate height
+
+            let leftPos = hoverPoint.x + 10;
+            if (leftPos + tooltipWidth > canvas.width) {
+              leftPos = hoverPoint.x - tooltipWidth - 10;
+            }
+
+            let topPos = hoverPoint.y - 70;
+            if (topPos < 0) {
+              topPos = hoverPoint.y + 10;
+            }
+
+            tooltip.style.left = leftPos + "px";
+            tooltip.style.top = topPos + "px";
+            tooltip.classList.add("visible");
+          } else {
+            tooltip.classList.remove("visible");
+          }
+        });
+
+        // Hide tooltip when mouse leaves canvas
+        canvas.addEventListener("mouseleave", function () {
+          tooltip.classList.remove("visible");
+        });
+      }
+
+      // Helper function to format date for tooltip display
+      function formatDateTimeForTooltip(date) {
+        const months = [
+          "Jan",
+          "Feb",
+          "Mar",
+          "Apr",
+          "May",
+          "Jun",
+          "Jul",
+          "Aug",
+          "Sep",
+          "Oct",
+          "Nov",
+          "Dec",
+        ];
+        const month = months[date.getMonth()];
+        const day = date.getDate();
+        const year = date.getFullYear();
+
+        // Format time with AM/PM
+        let hours = date.getHours();
+        const minutes = date.getMinutes().toString().padStart(2, "0");
+        const ampm = hours >= 12 ? "PM" : "AM";
+        hours = hours % 12;
+        hours = hours ? hours : 12; // Convert hour 0 to 12
+
+        return `${month} ${day} ${year} ${hours}:${minutes} ${ampm}`;
+      }
+
+      // Helper function to format date in text form for x-axis
+      function formatDateText(date) {
+        const months = [
+          "Jan",
+          "Feb",
+          "Mar",
+          "Apr",
+          "May",
+          "Jun",
+          "Jul",
+          "Aug",
+          "Sep",
+          "Oct",
+          "Nov",
+          "Dec",
+        ];
+        const month = months[date.getMonth()];
+        const day = date.getDate();
+
+        return `${month} ${day}`;
+      }
+
+      function renderAssessments(assessmentData, username) {
+        const assessmentContent = document.getElementById("assessmentContent");
+        const ATTEMPTS_PER_PAGE = 5;
+
+        // Check if we have assessment data
+        if (!assessmentData || assessmentData.length === 0) {
+          assessmentContent.innerHTML = "<p>No assessment data available for this student.</p>";
+          return;
+        }
+
+        // Filter assessments by category if needed
+        let filteredAssessments = assessmentData;
+        if (currentCategoryFilter !== "all") {
+          filteredAssessments = assessmentData.filter(
+            (assessment) => assessment.GameCategory == currentCategoryFilter
+          );
+        }
+
+        // Check if we have any assessments after filtering
+        if (filteredAssessments.length === 0) {
+          assessmentContent.innerHTML = `<p class="no-assessments-msg">No assessments found for category: ${getGameCategoryName(
+            currentCategoryFilter
+          )}</p>`;
+          return;
+        }
+
+        // Group assessments by title
+        const groupedAssessments = {};
+        filteredAssessments.forEach(assessment => {
+          const title = assessment.Title || "Untitled Assessment";
+          if (!groupedAssessments[title]) {
+            groupedAssessments[title] = {
+              title: title,
+              category: getGameCategoryName(assessment.GameCategory),
+              type: getAssessmentTypeName(assessment.Type),
+              attempts: []
+            };
+          }
+          groupedAssessments[title].attempts.push(assessment);
+        });
+
+        // Create assessment list
+        let html = '<div class="assessment-list">';
+
+        // Process each group of assessments
+        Object.values(groupedAssessments).forEach((group, groupIndex) => {
+          // Sort attempts by date (newest first)
+          group.attempts.sort((a, b) => 
+            parseFormattedDateTime(b.DataTimeStamp) - 
+            parseFormattedDateTime(a.DataTimeStamp)
+          );
+
+          // Calculate total pages
+          const totalPages = Math.ceil(group.attempts.length / ATTEMPTS_PER_PAGE);
+
+          html += `
+            <div class="assessment-item" id="assessment-group-${groupIndex}">
+              <div class="assessment-header">
+                <div class="assessment-title">${group.title}</div>
+                <div>Category: ${group.category}</div>
+                <div>Type: ${group.type}</div>
+                <div>Total Attempts: ${group.attempts.length}</div>
+                <button class="toggle-table-btn" onclick="toggleTable(${groupIndex})">
+                  <span class="toggle-icon">▼</span> Show Details
+                </button>
+              </div>
+              <div class="assessment-table-container" id="table-${groupIndex}" style="display: none;">
+                ${group.attempts.length > ATTEMPTS_PER_PAGE ? `
+                  <div class="table-pagination" id="pagination-${groupIndex}">
+                    <div class="pagination-controls">
+                      ${Array.from({ length: totalPages }, (_, i) => `
+                        <button onclick="changePage(${groupIndex}, ${i})" class="pagination-btn" id="page-btn-${groupIndex}-${i + 1}">
+                          ${i + 1}
+                        </button>
+                      `).join('')}
+                    </div>
+                  </div>
+                ` : ''}
+                <div class="table-wrapper">
+                  <table class="assessment-table">
+                    <thead>
+                      <tr>
+                        ${group.category !== "Vocabulary" ? 
+                          ` <th>Question</th>` : ''
+                        }
+                        ${group.attempts.slice(0, ATTEMPTS_PER_PAGE).map((attempt, index) => `
+                          <th>Take #${index + 1}<br>
+                            <small>${formatDateTimeForTooltip(parseFormattedDateTime(attempt.DataTimeStamp))}</small>
+                            <br>
+                            <small>Score: ${attempt.Score}</small>
+                          </th>
+                        `).join('')}
+                      </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            if (group.category === "Vocabulary") {
+              // For Vocabulary, show questions and answers in each take column
+              const maxQuestions = Math.max(...group.attempts.slice(0, ATTEMPTS_PER_PAGE).map(attempt => 
+                attempt.Data ? attempt.Data.length : 0
+              ));
+
+              // Create rows for each question number
+              for (let i = 0; i < maxQuestions; i++) {
+                html += '<tr>';
+                
+                // Add cells for each attempt
+                group.attempts.slice(0, ATTEMPTS_PER_PAGE).forEach(attempt => {
+                  const questionData = attempt.Data?.[i];
+                  if (questionData) {
+                    const isCorrect = true;
+                    const color = isCorrect ? 'green' : 'red';
+                    const question = questionData.Question;
+                    const studentAnswer = questionData.StudentAnswer || '';
+                    const correctAnswer = questionData.CorrectAnswer || '';
+                    
+                    html += `
+                      <td style="color: ${color}">
+                        <div class="question-answer">
+                          <div class="question">${question}</div>
+                          <div class="answer ${!isCorrect ? 'incorrect' : ''}">
+                            ${isCorrect ? correctAnswer : `Student: ${studentAnswer}<br>Correct: ${correctAnswer}`}
+                          </div>
+                        </div>
+                      </td>
+                    `;
+                  } else {
+                    html += '<td>-</td>';
+                  }
+                });
+                
+                html += '</tr>';
+              }
+            } else {
+              // For other categories, show questions as before
+              const allQuestions = new Set();
+              group.attempts.slice(0, ATTEMPTS_PER_PAGE).forEach(attempt => {
+                if (attempt.Data) {
+                  attempt.Data.forEach(question => {
+                    allQuestions.add(question.Question);
+                  });
+                }
+              });
+
+              // Create rows for each question
+              allQuestions.forEach(question => {
+                html += '<tr>';
+                html += `<td>${question}</td>`;
+                
+                // Add cells for each attempt
+                group.attempts.slice(0, ATTEMPTS_PER_PAGE).forEach(attempt => {
+                  const questionData = attempt.Data?.find(q => q.Question === question);
+                  if (questionData) {
+                    const isCorrect = questionData.IsCorrect;
+                    const color = isCorrect ? 'green' : 'red';
+                    const answer = questionData.CorrectAnswer || '';
+                    
+                    html += `
+                      <td style="color: ${color}">
+                        ${isCorrect ? '✓' : '✗'} 
+                        ${!isCorrect ? `<br><small>Correct: ${answer}</small>` : ''}
+                      </td>
+                    `;
+                  } else {
+                    html += '<td>-</td>';
+                  }
+                });
+                
+                html += '</tr>';
+              });
+            }
+
+            html += `
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          `;
+        });
+
+        html += "</div>";
+
+        // Add CSS for the table and toggle button
+        const style = document.createElement('style');
+        style.textContent = `
+          .assessment-table-container {
+            margin: 15px 0;
+            overflow-x: auto;
+            transition: all 0.3s ease;
+          }
+          
+          .assessment-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+          }
+          
+          .assessment-table th,
+          .assessment-table td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid #eee;
+            vertical-align: top;
+          }
+          
+          .assessment-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            white-space: nowrap;
+            text-align: center;
+          }
+          
+          .assessment-table th small {
+            display: block;
+            font-weight: normal;
+            font-size: 0.8em;
+            color: #666;
+            margin-top: 5px;
+          }
+          
+          .question-answer {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+          }
+          
+          .question {
+            font-weight: 500;
+            margin-bottom: 5px;
+          }
+          
+          .answer {
+            font-size: 0.9em;
+            color: #666;
+          }
+          
+          .answer.incorrect {
+            color: #d9534f;
+          }
+          
+          .assessment-table tr:hover {
+            background-color: #f5f5f5;
+          }
+
+          .assessment-header {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+          }
+
+          .assessment-title {
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-bottom: 5px;
+            flex: 1;
+          }
+
+          .toggle-table-btn {
+            background: #4caf50;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: background-color 0.3s;
+          }
+
+          .toggle-table-btn:hover {
+            background: #45a049;
+          }
+
+          .toggle-icon {
+            transition: transform 0.3s;
+          }
+
+          .toggle-table-btn.active .toggle-icon {
+            transform: rotate(180deg);
+          }
+
+          .table-pagination {
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: center;
+          }
+
+          .pagination-controls {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            flex-wrap: wrap;
+            justify-content: center;
+          }
+
+          .pagination-btn {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-width: 35px;
+          }
+
+          .pagination-btn:hover {
+            background: #e9ecef;
+          }
+
+          .pagination-btn.active {
+            background: #4caf50;
+            color: white;
+            border-color: #4caf50;
+          }
+
+          .table-wrapper {
+            overflow-x: auto;
+          }
+        `;
+        document.head.appendChild(style);
+
+        // Add JavaScript for toggle functionality
+        const script = document.createElement('script');
+        script.textContent = `
+          function toggleTable(index) {
+            const table = document.getElementById('table-' + index);
+            const button = table.previousElementSibling.querySelector('.toggle-table-btn');
+            const icon = button.querySelector('.toggle-icon');
+            
+            if (table.style.display === 'none') {
+              table.style.display = 'block';
+              button.innerHTML = '<span class="toggle-icon">▼</span> Hide Details';
+              button.classList.add('active');
+            } else {
+              table.style.display = 'none';
+              button.innerHTML = '<span class="toggle-icon">▼</span> Show Details';
+              button.classList.remove('active');
+            }
+          }
+
+          function changePage(groupIndex, page) {
+            const table = document.getElementById('table-' + groupIndex);
+            const buttons = document.querySelectorAll('[id^="page-btn-' + groupIndex + '-"]');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            const activeButton = document.getElementById('page-btn-' + groupIndex + '-' + (page + 1));
+            if (activeButton) {
+              activeButton.classList.add('active');
+            }
+            
+            const startIndex = page * ${ATTEMPTS_PER_PAGE};
+            const endIndex = startIndex + ${ATTEMPTS_PER_PAGE};
+            
+            // Update table headers
+            const headerRow = table.querySelector('thead tr');
+            const assessmentGroup = window.assessmentData.find(group => 
+              group.title === document.querySelector('#assessment-group-' + groupIndex + ' .assessment-title').textContent
+            );
+            
+            if (assessmentGroup) {
+              const attempts = assessmentGroup.attempts.slice(startIndex, endIndex);
+              headerRow.innerHTML = \`
+                \${assessmentGroup.category !== "Vocabulary" ? '<th>Question</th>' : ''}
+                \${attempts.map((attempt, index) => \`
+                  <th>Take #\${startIndex + index + 1}<br>
+                    <small>\${formatDateTimeForTooltip(parseFormattedDateTime(attempt.DataTimeStamp))}</small>
+                    <br>
+                    <small>Score: \${attempt.Score}</small>
+                  </th>
+                \`).join('')}
+              \`;
+              
+              // Update table body
+              const tbody = table.querySelector('tbody');
+              tbody.innerHTML = '';
+              
+              if (assessmentGroup.category === "Vocabulary") {
+                const maxQuestions = Math.max(...attempts.map(attempt => 
+                  attempt.Data ? attempt.Data.length : 0
+                ));
+                
+                for (let i = 0; i < maxQuestions; i++) {
+                  const row = document.createElement('tr');
+                  attempts.forEach(attempt => {
+                    const questionData = attempt.Data?.[i];
+                    if (questionData) {
+                      const isCorrect = true;
+                      const color = isCorrect ? 'green' : 'red';
+                      const question = questionData.Question;
+                      const studentAnswer = questionData.StudentAnswer || '';
+                      const correctAnswer = questionData.CorrectAnswer || '';
+                      
+                      row.innerHTML += \`
+                        <td style="color: \${color}">
+                          <div class="question-answer">
+                            <div class="question">\${question}</div>
+                            <div class="answer \${!isCorrect ? 'incorrect' : ''}">
+                              \${isCorrect ? correctAnswer : \`Student: \${studentAnswer}<br>Correct: \${correctAnswer}\`}
+                            </div>
+                          </div>
+                        </td>
+                      \`;
+                    } else {
+                      row.innerHTML += '<td>-</td>';
+                    }
+                  });
+                  tbody.appendChild(row);
+                }
+              } else {
+                const allQuestions = new Set();
+                attempts.forEach(attempt => {
+                  if (attempt.Data) {
+                    attempt.Data.forEach(question => {
+                      allQuestions.add(question.Question);
+                    });
+                  }
+                });
+                
+                allQuestions.forEach(question => {
+                  const row = document.createElement('tr');
+                  row.innerHTML = \`<td>\${question}</td>\`;
+                  
+                  attempts.forEach(attempt => {
+                    const questionData = attempt.Data?.find(q => q.Question === question);
+                    if (questionData) {
+                      const isCorrect = questionData.IsCorrect;
+                      const color = isCorrect ? 'green' : 'red';
+                      const answer = questionData.CorrectAnswer || '';
+                      
+                      row.innerHTML += \`
+                        <td style="color: \${color}">
+                          \${isCorrect ? '✓' : '✗'} 
+                          \${!isCorrect ? \`<br><small>Correct: \${answer}</small>\` : ''}
+                        </td>
+                      \`;
+                    } else {
+                      row.innerHTML += '<td>-</td>';
+                    }
+                  });
+                  
+                  tbody.appendChild(row);
+                });
+              }
+            }
+          }
+        `;
+        document.head.appendChild(script);
+
+        // Store assessment data globally for pagination
+        window.assessmentData = Object.values(groupedAssessments);
+
+        assessmentContent.innerHTML = html;
+      }
+
+      function parseFormattedDateTime(dateTimeStr) {
+        // Expected format: "yyyy-MM-dd_HH-mm-ss"
+        const [datePart, timePart] = dateTimeStr.split("_");
+        const [year, month, day] = datePart.split("-").map(Number);
+        const [hours, minutes, seconds] = timePart.split("-").map(Number);
+
+        // Month is 0-based in JavaScript Date (0 = Jan, 11 = Dec)
+        return new Date(year, month - 1, day, hours, minutes, seconds);
+      }
+
+      // Function to display error message
+      function displayError(message) {
+        const assessmentContent = document.getElementById("assessmentContent");
+        assessmentContent.innerHTML = `<div class="error-message">${message}</div>`;
+
+        // Also update graph area
+        const graphContent = document.getElementById("graphContent");
+        graphContent.innerHTML = `<div class="error-message">${message}</div>`;
+      }
+
+      // Helper function to get game category name
+      function getGameCategoryName(categoryId) {
+        const categories = {
+          0: "None",
+          1: "Analyzing Literature",
+          2: "Modals",
+          3: "Verb Forms",
+          4: "Vocabulary",
+          5: "Making Connection",
+          // Add more categories as needed
+        };
+
+        return categories[categoryId] || `Category ${categoryId}`;
+      }
+
+      // Helper function to get assessment type name
+      function getAssessmentTypeName(typeId) {
+        const types = {
+          0: "None",
+          1: "Grab And Place",
+          2: "Paragraph Grab And Place",
+          3: "Sliding Puzzle",
+          4: "Slice Game",
+          5: "Categorize Answers",
+          6: "Grab and Throw",
+          7: "Graphic Organizer",
+          // Add more types as needed
+        };
+
+        return types[typeId] || `Type ${typeId}`;
+      }
+
+      // Function to check user role and show/hide admin elements
+      function checkUserRole() {
+        const adminAuth = JSON.parse(localStorage.getItem("adminAuth"));
+        const userAuth = JSON.parse(localStorage.getItem("userAuth"));
+
+        // If admin is logged in, show admin-only elements
+        if (adminAuth) {
+          document.querySelectorAll(".admin-only").forEach((element) => {
+            element.style.display = "block";
+          });
+
+          // Update admin name display
+          const usernameElement = document.getElementById("currentUsername");
+          if (usernameElement && adminAuth.username) {
+            usernameElement.textContent = adminAuth.username;
+          }
+        }
+        // If regular user is logged in, keep admin elements hidden
+        else if (userAuth) {
+          // Update user name display
+          const usernameElement = document.getElementById("currentUsername");
+          if (usernameElement && userAuth.username) {
+            usernameElement.textContent = userAuth.username;
+          }
+
+          // Change "Admin:" text to "User:"
+          const adminNameElement = document.querySelector(".admin-name");
+          if (adminNameElement) {
+            adminNameElement.innerHTML =
+              'User: <span id="currentUsername">' +
+              (userAuth.username || "user") +
+              "</span>";
+          }
+        }
+      }
+    </script>
+    <script>
+      // Add DOM content loaded event listener for authentication checking
+      document.addEventListener("DOMContentLoaded", function () {
+        // Check authentication type and show/hide admin elements
+        checkUserRole();
+      });
+    </script>
+  </body>
+</html>
